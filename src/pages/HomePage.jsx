@@ -15,7 +15,7 @@ const HomePage = () => {
             Master the Future with <span className="text-ai-gradient">Adaptive AI</span> Learning
           </h1>
           <p className="lead text-muted mb-5 fs-5">
-            SkillForge.AI uses advanced neural algorithms to personalize your learning path. 
+            SkillForge.AI uses advanced neural algorithms to personalize your learning path.
             Real-time feedback, automated tutoring, and interactive AI labs.
           </p>
           <div className="d-flex gap-3">

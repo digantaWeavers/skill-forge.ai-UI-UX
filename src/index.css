@@ -128,8 +128,48 @@ label {
   outline: none;
 }
 
-.form-control-custom::placeholder {
-  color: rgba(255, 255, 255, 0.3) !important;
+.input-group-custom .form-control::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.6;
+}
+
+input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.6;
+}
+
+/* Integrated Input Group Styling */
+.input-group-custom {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.input-group-custom:focus-within {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.input-group-custom .input-group-text {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  padding-left: 1.2rem;
+  padding-right: 0.5rem;
+}
+
+.input-group-custom .form-control {
+  background: transparent !important;
+  border: none !important;
+  color: white !important;
+  padding: 0.8rem 1.2rem;
+  padding-left: 0.5rem;
+  box-shadow: none !important;
 }
 
 .nav-link-custom {
