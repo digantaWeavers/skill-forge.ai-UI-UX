@@ -1,0 +1,563 @@
+/* ==========================================
+   Instructor Basic Details - Premium Design
+   Matches Subscription Page UI
+========================================== */
+
+.onboarding-page {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    padding: 40px 0;
+}
+
+/* ==========================================
+   Animated Background Orbs
+========================================== */
+
+.onboarding-bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.onboarding-bg-orb-1 {
+    width: 500px;
+    height: 500px;
+    background: rgba(99, 102, 241, 0.3);
+    top: -150px;
+    left: -100px;
+    animation: onboardingFloat1 12s ease-in-out infinite;
+}
+
+.onboarding-bg-orb-2 {
+    width: 400px;
+    height: 400px;
+    background: rgba(6, 182, 212, 0.25);
+    bottom: -100px;
+    right: -100px;
+    animation: onboardingFloat2 15s ease-in-out infinite;
+}
+
+@keyframes onboardingFloat1 {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(60px, 40px) scale(1.08);
+    }
+}
+
+@keyframes onboardingFloat2 {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(-40px, -30px) scale(1.1);
+    }
+}
+
+/* ==========================================
+   Layout
+========================================== */
+
+.container {
+    position: relative;
+    z-index: 2;
+}
+
+/* ==========================================
+   Badge
+========================================== */
+
+.onboarding-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* ==========================================
+   Header
+========================================== */
+
+.onboarding-title {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text-main, #fff);
+    margin-bottom: 1rem;
+}
+
+.text-ai-gradient {
+    background: linear-gradient(135deg,
+            #6366f1,
+            #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.onboarding-subtitle {
+    max-width: 650px;
+    margin: auto;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text-muted, #94a3b8);
+}
+
+/* ==========================================
+   Progress Bar
+========================================== */
+
+.onboarding-progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4rem;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.onboarding-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #64748b;
+    font-size: .8rem;
+    font-weight: 600;
+    min-width: 70px;
+}
+
+.onboarding-step.completed {
+    color: #22c55e;
+}
+
+.onboarding-step.active {
+    color: white;
+}
+
+.onboarding-step-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,
+            #6366f1,
+            #06b6d4);
+    box-shadow: 0 0 20px rgba(99, 102, 241, .6);
+    margin-bottom: 6px;
+}
+
+.onboarding-step-line {
+    width: 70px;
+    height: 2px;
+    background: rgba(255, 255, 255, .08);
+    margin: 0 10px;
+}
+
+.onboarding-step-line.completed {
+    background: #22c55e;
+}
+
+.onboarding-step-line.active {
+    background: linear-gradient(90deg,
+            #22c55e,
+            #6366f1);
+}
+
+/* ==========================================
+   Main Card
+========================================== */
+
+.onboarding-card {
+    position: relative;
+    background: linear-gradient(165deg,
+            rgba(30, 41, 59, .92),
+            rgba(15, 23, 42, .96));
+
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+
+    border: 1px solid rgba(99, 102, 241, .18);
+
+    border-radius: 28px;
+
+    padding: 2.5rem;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .03),
+        0 20px 60px rgba(0, 0, 0, .45),
+        0 0 40px rgba(99, 102, 241, .08);
+}
+
+.onboarding-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 28px;
+    z-index: -1;
+
+    background: linear-gradient(135deg,
+            rgba(99, 102, 241, .4),
+            transparent 30%,
+            transparent 70%,
+            rgba(6, 182, 212, .3));
+
+    opacity: .4;
+}
+
+/* ==========================================
+   Avatar
+========================================== */
+
+.onboarding-avatar-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.onboarding-avatar-upload {
+    width: 140px;
+    height: 140px;
+    margin: auto;
+    position: relative;
+    cursor: pointer;
+
+    border-radius: 24px;
+
+    border: 2px dashed rgba(99, 102, 241, .35);
+
+    background: rgba(255, 255, 255, .03);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    transition: all .3s ease;
+}
+
+.onboarding-avatar-upload:hover {
+    border-color: #6366f1;
+    transform: translateY(-4px);
+}
+
+.onboarding-avatar-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+
+    color: #94a3b8;
+    font-size: .85rem;
+}
+
+.onboarding-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.onboarding-avatar-overlay {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, .45);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    transition: .3s;
+}
+
+.onboarding-avatar-upload:hover .onboarding-avatar-overlay {
+    opacity: 1;
+}
+
+.onboarding-avatar-hint {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: .8rem;
+}
+
+/* ==========================================
+   Inputs
+========================================== */
+
+.form-label {
+    color: #e2e8f0;
+    margin-bottom: .5rem;
+    font-size: .75rem;
+    letter-spacing: 1px;
+}
+
+.input-group-custom {
+    display: flex;
+    align-items: center;
+
+    background: rgba(255, 255, 255, .03);
+
+    border: 1px solid rgba(255, 255, 255, .08);
+
+    border-radius: 14px;
+
+    transition: all .3s ease;
+}
+
+.input-group-custom:focus-within {
+    border-color: #6366f1;
+
+    box-shadow:
+        0 0 0 4px rgba(99, 102, 241, .15);
+}
+
+.input-group-custom.has-error {
+    border-color: #ef4444;
+}
+
+.input-group-text {
+    background: transparent !important;
+    border: none !important;
+    color: #6366f1;
+    padding-left: 16px;
+}
+
+.input-group-custom input,
+.input-group-custom textarea,
+.form-control {
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: none !important;
+}
+
+.form-control::placeholder {
+    color: #64748b !important;
+}
+
+.form-control {
+    padding: 14px 16px;
+}
+
+/* ==========================================
+   Textarea
+========================================== */
+
+.onboarding-textarea-wrap {
+    position: relative;
+
+    background: rgba(255, 255, 255, .03);
+
+    border: 1px solid rgba(255, 255, 255, .08);
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    transition: all .3s ease;
+}
+
+.onboarding-textarea-wrap:focus-within {
+    border-color: #6366f1;
+
+    box-shadow:
+        0 0 0 4px rgba(99, 102, 241, .15);
+}
+
+.onboarding-textarea-wrap.has-error {
+    border-color: #ef4444;
+}
+
+.onboarding-textarea-icon {
+    position: absolute;
+    top: 18px;
+    left: 16px;
+    color: #6366f1;
+}
+
+.onboarding-textarea-wrap textarea {
+    padding-left: 48px !important;
+    resize: none;
+    min-height: 150px;
+}
+
+.onboarding-bio-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.onboarding-char-count {
+    color: #64748b;
+    font-size: .8rem;
+}
+
+.onboarding-char-count.limit {
+    color: #ef4444;
+}
+
+/* ==========================================
+   Errors
+========================================== */
+
+.onboarding-error-text {
+    color: #ef4444;
+    margin-top: 6px;
+    font-size: .8rem;
+}
+
+/* ==========================================
+   Submit Button
+========================================== */
+
+.onboarding-submit-btn {
+    border: none !important;
+
+    border-radius: 14px !important;
+
+    background: linear-gradient(135deg,
+            #6366f1,
+            #06b6d4) !important;
+
+    color: white !important;
+
+    font-weight: 700 !important;
+
+    transition: .3s ease !important;
+
+    box-shadow:
+        0 10px 30px rgba(99, 102, 241, .35);
+}
+
+.onboarding-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 16px 40px rgba(99, 102, 241, .45);
+}
+
+.onboarding-submit-btn:disabled {
+    opacity: .6;
+}
+
+.onboarding-spinner {
+    width: 18px;
+    height: 18px;
+
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-top-color: white;
+
+    border-radius: 50%;
+
+    animation: onboardingSpin .8s linear infinite;
+}
+
+@keyframes onboardingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================
+   Animations
+========================================== */
+
+.animate-fade-in {
+    animation: fadeInUp .7s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   Responsive
+========================================== */
+
+@media (max-width: 992px) {
+    .onboarding-card {
+        padding: 2rem;
+    }
+
+    .onboarding-title {
+        font-size: 2.4rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .onboarding-title {
+        font-size: 2rem;
+    }
+
+    .onboarding-subtitle {
+        font-size: .95rem;
+    }
+
+    .onboarding-card {
+        padding: 1.5rem;
+        border-radius: 22px;
+    }
+
+    .onboarding-avatar-upload {
+        width: 120px;
+        height: 120px;
+    }
+
+    .onboarding-progress-bar {
+        gap: 10px;
+    }
+
+    .onboarding-step-line {
+        width: 40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .onboarding-title {
+        font-size: 1.75rem;
+    }
+
+    .onboarding-card {
+        padding: 1.25rem;
+    }
+
+    .onboarding-avatar-upload {
+        width: 110px;
+        height: 110px;
+    }
+
+    .onboarding-step-line {
+        display: none;
+    }
+
+    .onboarding-progress-bar {
+        justify-content: space-between;
+    }
+}

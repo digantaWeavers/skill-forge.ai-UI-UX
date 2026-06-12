@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Cpu, Eye, EyeOff } from 'lucide-react';
 
 const InstructorLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // In a real application, you would authenticate here.
+    // For this mockup, we just redirect to the dashboard.
+    navigate('/dashboard');
+  };
 
   return (
     <div className="container py-5 min-vh-100 d-flex align-items-center justify-content-center">
@@ -19,11 +29,11 @@ const InstructorLogin = () => {
         </div>
 
         <div className="mb-4">
-          <button className="btn btn-social mb-3">
+          <button className="btn btn-social mb-3" onClick={() => navigate('/dashboard')}>
             <img src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000" alt="Google" width="20" />
             <span>Continue with Google</span>
           </button>
-          <button className="btn btn-social">
+          <button className="btn btn-social" onClick={() => navigate('/dashboard')}>
             <img src="https://img.icons8.com/?size=100&id=12599&format=png&color=000000" alt="GitHub" width="20" />
             <span>Continue with GitHub</span>
           </button>
@@ -35,7 +45,7 @@ const InstructorLogin = () => {
           <hr className="flex-grow-1 border-secondary opacity-25" />
         </div>
 
-        <form>
+        <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label className="form-label small fw-bold">WORK EMAIL</label>
             <div className="input-group-custom">
@@ -46,6 +56,9 @@ const InstructorLogin = () => {
                 type="email"
                 className="form-control"
                 placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -63,6 +76,9 @@ const InstructorLogin = () => {
                 type={showPassword ? "text" : "password"}
                 className="form-control"
                 placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
               <button
                 type="button"

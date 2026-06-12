@@ -90,7 +90,12 @@ const InstructorRegister = () => {
     if (isVerificationValid()) {
       // Logic for verification would go here
       alert(`Registration Successful as ${formData.role}!`);
-      navigate('/dashboard'); // This route will be created later
+      // Redirect instructors to subscription page, others to dashboard
+      if (formData.role === 'instructor') {
+        navigate('/subscription/instructor');
+      } else {
+        navigate('/dashboard');
+      }
     }
   };
 
