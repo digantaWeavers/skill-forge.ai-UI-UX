@@ -32,6 +32,8 @@ const InstructorRegister = () => {
     emailCode: '',
     phoneCode: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Auto-generate username when fullName or email changes
   useEffect(() => {
@@ -74,29 +76,45 @@ const InstructorRegister = () => {
   };
 
   const isVerificationValid = () => {
-    return verificationData.emailCode.length === 6 && verificationData.phoneCode.length === 6;
+    return verificationData.emailCode.trim().length >= 4 && verificationData.phoneCode.trim().length >= 4;
   };
 
   const handleRegister = (e) => {
     e.preventDefault();
-    if (isFormValid()) {
-      console.log('Registering as:', formData.role); // Just for debugging
+    if (!isFormValid() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    setTimeout(() => {
+      setIsSubmitting(false);
       setStep(2);
-    }
+    }, 1500);
   };
 
   const handleVerify = (e) => {
     e.preventDefault();
-    if (isVerificationValid()) {
-      // Logic for verification would go here
-      alert(`Registration Successful as ${formData.role}!`);
-      // Redirect instructors to subscription page, others to dashboard
+    if (!isVerificationValid() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    setTimeout(() => {
+      setIsSubmitting(false);
       if (formData.role === 'instructor') {
         navigate('/subscription/instructor');
       } else {
         navigate('/dashboard');
       }
-    }
+    }, 1500);
+  };
+
+  const handleSocialLogin = (provider) => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      navigate('/dashboard');
+    }, 1000);
   };
 
   if (step === 2) {
@@ -117,6 +135,12 @@ const InstructorRegister = () => {
             <h2 className="fw-bold mb-2">Verify Your Account</h2>
             <p className="text-muted">We've sent verification codes to your email and phone</p>
           </div>
+
+          {errorMessage && (
+            <div className="alert alert-danger py-2 small" role="alert">
+              {errorMessage}
+            </div>
+          )}
 
           <form onSubmit={handleVerify}>
             <div className="mb-4">
@@ -158,9 +182,9 @@ const InstructorRegister = () => {
             <button
               type="submit"
               className="btn btn-primary-custom w-100 py-3 mt-2"
-              disabled={!isVerificationValid()}
+              disabled={!isVerificationValid() || isSubmitting}
             >
-              Verify & Complete Setup
+              {isSubmitting ? 'Verifying...' : 'Verify & Complete Setup'}
             </button>
           </form>
         </div>
@@ -184,13 +208,13 @@ const InstructorRegister = () => {
 
         <div className="row mb-4 g-3">
           <div className="col-md-6">
-            <button className="btn btn-social">
+            <button type="button" className="btn btn-social" onClick={() => handleSocialLogin('google')}>
               <img src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000" alt="Google" width="20" />
               <span>Google</span>
             </button>
           </div>
           <div className="col-md-6">
-            <button className="btn btn-social">
+            <button type="button" className="btn btn-social" onClick={() => handleSocialLogin('github')}>
               <img src="https://img.icons8.com/?size=100&id=12599&format=png&color=000000" alt="GitHub" width="20" />
               <span>GitHub</span>
             </button>
@@ -202,6 +226,12 @@ const InstructorRegister = () => {
           <span className="text-muted small">OR SIGN UP WITH EMAIL</span>
           <hr className="flex-grow-1 border-secondary opacity-25" />
         </div>
+
+        {errorMessage && (
+          <div className="alert alert-danger py-2 small" role="alert">
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleRegister}>
           {/* Hidden Role Field */}
@@ -344,9 +374,11 @@ const InstructorRegister = () => {
           <button
             type="submit"
             className="btn btn-primary-custom w-100 py-3"
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isSubmitting}
           >
-            Create {formData.role === 'instructor' ? 'Instructor' : 'Student'} Account
+            {isSubmitting
+              ? 'Creating Account...'
+              : `Create ${formData.role === 'instructor' ? 'Instructor' : 'Student'} Account`}
           </button>
         </form>
 

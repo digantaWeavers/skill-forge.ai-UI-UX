@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Users, 
-  DollarSign, 
-  Settings, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search, 
-  Bell, 
-  LogOut, 
-  Menu, 
-  X, 
-  TrendingUp, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  DollarSign,
+  Settings,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Bell,
+  LogOut,
+  Menu,
+  X,
+  TrendingUp,
   ChevronDown,
   ChevronRight,
-  Check, 
+  Check,
   AlertCircle,
   BookOpenCheck,
   CreditCard,
@@ -39,7 +39,7 @@ import './InstructorDashboard.css';
 
 const InstructorDashboard = () => {
   const navigate = useNavigate();
-  
+
   // UI State
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -47,15 +47,15 @@ const InstructorDashboard = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-  
+
   // Modals state
   const [courseModalOpen, setCourseModalOpen] = useState(false);
   const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null); // null when adding new course
-  
+
   // Class details state
   const [selectedCourseId, setSelectedCourseId] = useState(null);
-  
+
   // Change Password form state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -68,52 +68,52 @@ const InstructorDashboard = () => {
     { id: 3, text: 'Update machine learning dataset links in curriculum repository', completed: false },
     { id: 4, text: 'Upload part-wise videos for AI-Driven UX/UI Design Essentials', completed: false }
   ]);
-  
+
   // Mock Data States
   const [courses, setCourses] = useState([
-    { 
-      id: 1, 
-      title: 'Advanced Python & Neural Networks', 
-      category: 'AI & Data Science', 
-      price: 99.00, 
-      students: 452, 
-      rating: 4.9, 
+    {
+      id: 1,
+      title: 'Advanced Python & Neural Networks',
+      category: 'AI & Data Science',
+      price: 99.00,
+      students: 452,
+      rating: 4.9,
       status: 'Published',
       image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=400&q=80',
       publishDate: '2026-06-01',
       publishTime: '14:30'
     },
-    { 
-      id: 2, 
-      title: 'Introduction to Machine Learning v3', 
-      category: 'Machine Learning', 
-      price: 79.00, 
-      students: 310, 
-      rating: 4.8, 
+    {
+      id: 2,
+      title: 'Introduction to Machine Learning v3',
+      category: 'Machine Learning',
+      price: 79.00,
+      students: 310,
+      rating: 4.8,
       status: 'Published',
       image: 'https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=400&q=80',
       publishDate: '2026-05-18',
       publishTime: '09:15'
     },
-    { 
-      id: 3, 
-      title: 'AI-Driven UX/UI Design Essentials', 
-      category: 'UI/UX Design', 
-      price: 59.00, 
-      students: 284, 
-      rating: 4.7, 
+    {
+      id: 3,
+      title: 'AI-Driven UX/UI Design Essentials',
+      category: 'UI/UX Design',
+      price: 59.00,
+      students: 284,
+      rating: 4.7,
       status: 'Published',
       image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&q=80',
       publishDate: '2026-05-24',
       publishTime: '11:00'
     },
-    { 
-      id: 4, 
-      title: 'Next.js 15 & OpenAI Integration', 
-      category: 'Web Development', 
-      price: 129.00, 
-      students: 202, 
-      rating: 4.9, 
+    {
+      id: 4,
+      title: 'Next.js 15 & OpenAI Integration',
+      category: 'Web Development',
+      price: 129.00,
+      students: 202,
+      rating: 4.9,
       status: 'Draft',
       image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80',
       publishDate: '2026-06-04',
@@ -298,12 +298,12 @@ const InstructorDashboard = () => {
     // prefer locally uploaded image preview; fall back to URL; fall back to default
     const imageUrl = courseForm.imagePreview || courseForm.image.trim() || 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=400&q=80';
     const finalDate = courseForm.publishDate.trim() || new Date().toISOString().split('T')[0];
-    const finalTime = courseForm.publishTime.trim() || new Date().toLocaleTimeString('en-US', {hour12: false}).slice(0, 5);
+    const finalTime = courseForm.publishTime.trim() || new Date().toLocaleTimeString('en-US', { hour12: false }).slice(0, 5);
 
     if (editingCourse) {
-      setCourses(prev => prev.map(c => c.id === editingCourse.id ? { 
-        ...c, 
-        title: courseForm.title, 
+      setCourses(prev => prev.map(c => c.id === editingCourse.id ? {
+        ...c,
+        title: courseForm.title,
         category: courseForm.category,
         price: priceNum,
         status: courseForm.status,
@@ -383,7 +383,7 @@ const InstructorDashboard = () => {
       triggerToast('New password and confirm password do not match', 'danger');
       return;
     }
-    
+
     // Simulate updating password
     triggerToast('Password updated successfully!', 'success');
     setCurrentPassword('');
@@ -398,19 +398,19 @@ const InstructorDashboard = () => {
       triggerToast('Please enter a season name', 'danger');
       return;
     }
-    
+
     const seasonNumber = (courseSyllabus[courseId]?.length || 0) + 1;
     const newSeason = {
       id: Date.now(),
       name: `Season ${seasonNumber}: ${newSeasonName}`,
       videos: []
     };
-    
+
     setCourseSyllabus(prev => ({
       ...prev,
       [courseId]: [...(prev[courseId] || []), newSeason]
     }));
-    
+
     setNewSeasonName('');
     triggerToast('Season created successfully!', 'success');
   };
@@ -434,14 +434,14 @@ const InstructorDashboard = () => {
       triggerToast('Please choose a video file to upload', 'danger');
       return;
     }
-    
+
     const newVideo = {
       id: Date.now(),
       title: videoTitleForm,
       duration: videoFileData.duration,
       fileName: videoFileData.name
     };
-    
+
     setCourseSyllabus(prev => {
       const updatedSeasons = (prev[courseId] || []).map(s => {
         if (s.id === seasonId) {
@@ -451,7 +451,7 @@ const InstructorDashboard = () => {
       });
       return { ...prev, [courseId]: updatedSeasons };
     });
-    
+
     setVideoTitleForm('');
     setVideoFileData(null);
     if (videoFileRef.current) videoFileRef.current.value = '';
@@ -512,13 +512,13 @@ const InstructorDashboard = () => {
   const activeCoursesCount = courses.filter(c => c.status === 'Published').length;
 
   // Filtered lists
-  const filteredCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredCourses = courses.filter(c =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.courseTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -527,7 +527,7 @@ const InstructorDashboard = () => {
 
   return (
     <div className="dashboard-layout">
-      
+
       {/* Sidebar Panel */}
       <aside className={`dashboard-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
@@ -535,7 +535,7 @@ const InstructorDashboard = () => {
             <Sparkles size={24} className="text-secondary" />
             <span>SkillForge.AI</span>
           </div>
-          <button 
+          <button
             className="btn d-lg-none ms-auto text-muted p-0"
             onClick={() => setSidebarCollapsed(true)}
           >
@@ -545,7 +545,7 @@ const InstructorDashboard = () => {
 
         <ul className="sidebar-menu">
           <li className="sidebar-menu-item">
-            <button 
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'overview' ? 'active' : ''}`}
               onClick={() => { setActiveTab('overview'); setSearchQuery(''); setSelectedCourseId(null); }}
             >
@@ -554,7 +554,7 @@ const InstructorDashboard = () => {
             </button>
           </li>
           <li className="sidebar-menu-item">
-            <button 
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${(activeTab === 'classes' || activeTab === 'class-detail') ? 'active' : ''}`}
               onClick={() => { setActiveTab('classes'); setSearchQuery(''); setSelectedCourseId(null); }}
             >
@@ -563,7 +563,7 @@ const InstructorDashboard = () => {
             </button>
           </li>
           <li className="sidebar-menu-item">
-            <button 
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'students' ? 'active' : ''}`}
               onClick={() => { setActiveTab('students'); setSearchQuery(''); setSelectedCourseId(null); }}
             >
@@ -572,7 +572,7 @@ const InstructorDashboard = () => {
             </button>
           </li>
           <li className="sidebar-menu-item">
-            <button 
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'manage-plan' ? 'active' : ''}`}
               onClick={() => { setActiveTab('manage-plan'); setSearchQuery(''); setSelectedCourseId(null); }}
             >
@@ -581,7 +581,7 @@ const InstructorDashboard = () => {
             </button>
           </li>
           <li className="sidebar-menu-item">
-            <button 
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => { setActiveTab('profile'); setSearchQuery(''); setSelectedCourseId(null); }}
             >
@@ -606,11 +606,11 @@ const InstructorDashboard = () => {
 
       {/* Main Content Container */}
       <div className="dashboard-content-area">
-        
+
         {/* Topbar */}
         <header className="dashboard-topbar">
           <div className="topbar-left">
-            <button 
+            <button
               className="sidebar-toggle-btn"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               aria-label="Toggle Sidebar"
@@ -620,13 +620,13 @@ const InstructorDashboard = () => {
 
             <div className="topbar-search-wrapper">
               <Search className="topbar-search-icon" size={18} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="topbar-search-input"
                 placeholder={
-                  activeTab === 'classes' ? "Search your classes..." : 
-                  activeTab === 'students' ? "Search enrolled students..." :
-                  "Search everything..."
+                  activeTab === 'classes' ? "Search your classes..." :
+                    activeTab === 'students' ? "Search enrolled students..." :
+                      "Search everything..."
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -635,22 +635,22 @@ const InstructorDashboard = () => {
           </div>
 
           <div className="topbar-right">
-            
+
             {/* Notifications Section */}
             <div className="topbar-profile" ref={notificationRef}>
-              <button 
+              <button
                 className="notification-bell-btn"
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
               >
                 <Bell size={20} />
                 {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
               </button>
-              
+
               {notificationsOpen && (
                 <div className="profile-dropdown-menu" style={{ width: '320px', right: 0 }}>
                   <div className="dropdown-header-info d-flex justify-content-between align-items-center">
                     <span className="fw-bold">Notifications</span>
-                    <button 
+                    <button
                       className="btn btn-link btn-sm text-ai-gradient p-0 text-decoration-none small fw-semibold"
                       onClick={markAllNotificationsRead}
                     >
@@ -675,8 +675,8 @@ const InstructorDashboard = () => {
 
             {/* Profile Dropdown */}
             <div className="topbar-profile" ref={profileRef}>
-              <div 
-                className="profile-trigger" 
+              <div
+                className="profile-trigger"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               >
                 <div className="profile-trigger-avatar">
@@ -692,18 +692,18 @@ const InstructorDashboard = () => {
                     <div className="dropdown-user-name">{profileData.name}</div>
                     <div className="dropdown-user-email">{profileData.email}</div>
                   </div>
-                  
-                  <button 
+
+                  <button
                     className="dropdown-menu-item"
                     onClick={() => { setActiveTab('profile'); setProfileDropdownOpen(false); }}
                   >
                     <User size={16} />
                     <span>My Profile</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="dropdown-menu-item"
-                    onClick={() => { 
+                    onClick={() => {
                       setProfileDropdownOpen(false);
                       setChangePasswordModalOpen(true);
                     }}
@@ -713,11 +713,11 @@ const InstructorDashboard = () => {
                   </button>
 
                   <hr className="border-secondary opacity-25 my-1" />
-                  
-                  <button 
+
+                  <button
                     className="dropdown-menu-item logout-item"
                     onClick={() => {
-                      if(window.confirm("Are you sure you want to log out?")) {
+                      if (window.confirm("Are you sure you want to log out?")) {
                         navigate('/auth/login');
                       }
                     }}
@@ -734,7 +734,7 @@ const InstructorDashboard = () => {
 
         {/* Dashboard Pages */}
         <main className="dashboard-page-content">
-          
+
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="animate-fade-in">
@@ -743,7 +743,7 @@ const InstructorDashboard = () => {
                   <h1 className="h3 fw-bold mb-1">Welcome back, Evelyn</h1>
                   <p className="text-muted mb-0">Here's your educational portal analytics overview.</p>
                 </div>
-                <button 
+                <button
                   className="btn btn-primary-custom d-inline-flex align-items-center gap-2"
                   onClick={() => {
                     setEditingCourse(null);
@@ -768,7 +768,7 @@ const InstructorDashboard = () => {
               <div className="row g-4 mb-4">
                 <div className="col-12 col-sm-6 col-lg-3">
                   <div className="stat-card-gradient">
-                     <div className="stat-card-icon-wrapper">
+                    <div className="stat-card-icon-wrapper">
                       <DollarSign size={24} />
                     </div>
                     <div className="stat-card-value">${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -823,7 +823,7 @@ const InstructorDashboard = () => {
 
               {/* Charts and Task Tracker Checklist Section */}
               <div className="row g-4 mb-4">
-                
+
                 {/* Simulated Revenue Chart */}
                 <div className="col-12 col-lg-7">
                   <div className="glass-card p-4 h-100">
@@ -844,7 +844,7 @@ const InstructorDashboard = () => {
                         const pctHeight = (item.val / maxVal) * 100;
                         return (
                           <div key={index} className="chart-bar-wrapper">
-                            <div 
+                            <div
                               className="chart-bar-fill"
                               style={{ height: `${pctHeight}%` }}
                             >
@@ -869,14 +869,14 @@ const InstructorDashboard = () => {
                         {tasks.filter(t => t.completed).length} / {tasks.length} Done
                       </span>
                     </div>
-                    
+
                     <div className="milestones-list mt-3">
                       {tasks.map(task => (
                         <div key={task.id} className={`milestone-item-row ${task.completed ? 'completed' : ''}`}>
-                          <input 
-                            type="checkbox" 
-                            className="form-check-input milestone-checkbox" 
-                            checked={task.completed} 
+                          <input
+                            type="checkbox"
+                            className="form-check-input milestone-checkbox"
+                            checked={task.completed}
                             onChange={() => toggleTask(task.id)}
                           />
                           <span className="milestone-text">{task.text}</span>
@@ -890,13 +890,13 @@ const InstructorDashboard = () => {
 
               {/* Popular and Latest Courses Section */}
               <div className="row g-4">
-                
+
                 {/* Popular Courses */}
                 <div className="col-12 col-lg-8">
                   <div className="glass-card p-4 h-100">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h3 className="h5 fw-bold mb-0">Popular Curriculum Modules</h3>
-                      <button 
+                      <button
                         className="btn btn-link btn-sm text-ai-gradient p-0 text-decoration-none"
                         onClick={() => setActiveTab('classes')}
                       >
@@ -919,9 +919,9 @@ const InstructorDashboard = () => {
                             <tr key={course.id}>
                               <td>
                                 <div className="d-flex align-items-center gap-3">
-                                  <img 
-                                    src={course.image} 
-                                    alt={course.title} 
+                                  <img
+                                    src={course.image}
+                                    alt={course.title}
                                     style={{ width: '48px', height: '36px', objectFit: 'cover', borderRadius: '6px' }}
                                   />
                                   <div>
@@ -948,14 +948,14 @@ const InstructorDashboard = () => {
                     <div className="d-flex flex-column gap-3">
                       {students.slice(0, 4).map(st => (
                         <div key={st.id} className="d-flex align-items-center gap-3">
-                          <div 
+                          <div
                             className="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold"
-                            style={{ 
-                              width: '40px', 
-                              height: '40px', 
-                              background: 'rgba(255,255,255,0.05)', 
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              background: 'rgba(255,255,255,0.05)',
                               border: '1px solid var(--border-color)',
-                              fontSize: '0.9rem' 
+                              fontSize: '0.9rem'
                             }}
                           >
                             {st.name.split(' ').map(n => n[0]).join('')}
@@ -985,18 +985,18 @@ const InstructorDashboard = () => {
                   <h1 className="h3 fw-bold mb-1">Class Curriculum & Course Builder</h1>
                   <p className="text-muted mb-0">Create, edit, and optimize your learning modules.</p>
                 </div>
-                
+
                 <div className="d-flex align-items-center gap-3 flex-wrap">
                   {/* Grid / List View Toggle */}
                   <div className="view-toggle-container">
-                    <button 
+                    <button
                       className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
                       onClick={() => setViewMode('grid')}
                       title="Grid View"
                     >
                       <Grid size={18} />
                     </button>
-                    <button 
+                    <button
                       className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
                       onClick={() => setViewMode('list')}
                       title="List View"
@@ -1005,7 +1005,7 @@ const InstructorDashboard = () => {
                     </button>
                   </div>
 
-                  <button 
+                  <button
                     className="btn btn-primary-custom d-inline-flex align-items-center gap-2"
                     onClick={() => {
                       setEditingCourse(null);
@@ -1039,12 +1039,12 @@ const InstructorDashboard = () => {
                     <div className="col-12 col-sm-6 col-md-4 col-xl-3" key={course.id}>
                       <div className="glass-card overflow-hidden h-100 d-flex flex-column border-secondary border-opacity-10 hover-lift transition-all">
                         <div style={{ position: 'relative', height: '150px', overflow: 'hidden' }}>
-                          <img 
-                            src={course.image} 
+                          <img
+                            src={course.image}
                             alt={course.title}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
-                          <div 
+                          <div
                             className={`badge position-absolute px-2.5 py-1.5 ${course.status === 'Published' ? 'bg-success' : 'bg-secondary'}`}
                             style={{ top: '10px', right: '10px', fontSize: '0.75rem' }}
                           >
@@ -1081,7 +1081,7 @@ const InstructorDashboard = () => {
                           <div className="d-flex justify-content-between align-items-center mt-auto gap-2">
                             <span className="text-warning small fw-bold" style={{ fontSize: '0.8rem' }}>⭐ {course.rating.toFixed(1)}</span>
                             <div className="d-flex gap-1.5">
-                              <button 
+                              <button
                                 className="btn btn-outline-secondary p-1.5 text-white border-secondary border-opacity-25"
                                 onClick={() => {
                                   setSelectedCourseId(course.id);
@@ -1092,7 +1092,7 @@ const InstructorDashboard = () => {
                               >
                                 <Eye size={14} />
                               </button>
-                              <button 
+                              <button
                                 className="btn btn-outline-secondary p-1.5 text-white border-secondary border-opacity-25"
                                 onClick={() => openEditModal(course)}
                                 title="Edit Class"
@@ -1100,7 +1100,7 @@ const InstructorDashboard = () => {
                               >
                                 <Edit size={14} />
                               </button>
-                              <button 
+                              <button
                                 className="btn btn-outline-danger p-1.5 border-danger border-opacity-25 text-danger"
                                 onClick={() => handleDeleteCourse(course.id, course.title)}
                                 title="Delete Class"
@@ -1124,14 +1124,14 @@ const InstructorDashboard = () => {
                         <div className="class-list-img-wrapper">
                           <img src={course.image} alt={course.title} />
                         </div>
-                        
+
                         <div className="class-list-details">
                           <div className="d-flex align-items-center gap-2 mb-1">
                             <span className="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25" style={{ fontSize: '0.75rem' }}>{course.category}</span>
                             <span className={`badge ${course.status === 'Published' ? 'bg-success bg-opacity-20 text-success border border-success border-opacity-25' : 'bg-secondary bg-opacity-20 text-muted'}`} style={{ fontSize: '0.75rem' }}>{course.status}</span>
                           </div>
                           <h4 className="fw-bold text-white h6 mb-2">{course.title}</h4>
-                          
+
                           <div className="class-list-meta">
                             <div className="d-flex align-items-center gap-1.5 text-muted small">
                               <Calendar size={13} className="text-secondary" />
@@ -1154,7 +1154,7 @@ const InstructorDashboard = () => {
                           </div>
 
                           <div className="d-flex gap-2">
-                            <button 
+                            <button
                               className="btn btn-outline-secondary p-2 text-white border-secondary border-opacity-25"
                               onClick={() => {
                                 setSelectedCourseId(course.id);
@@ -1164,14 +1164,14 @@ const InstructorDashboard = () => {
                             >
                               <Eye size={15} />
                             </button>
-                            <button 
+                            <button
                               className="btn btn-outline-secondary p-2 text-white border-secondary border-opacity-25"
                               onClick={() => openEditModal(course)}
                               title="Edit Class Details"
                             >
                               <Edit size={15} />
                             </button>
-                            <button 
+                            <button
                               className="btn btn-outline-danger p-2 border-danger border-opacity-25 text-danger"
                               onClick={() => handleDeleteCourse(course.id, course.title)}
                               title="Delete Class"
@@ -1192,7 +1192,7 @@ const InstructorDashboard = () => {
           {activeTab === 'class-detail' && selectedCourse && (
             <div className="animate-fade-in">
               {/* Back Header Nav */}
-              <button 
+              <button
                 className="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-4 text-white border-secondary border-opacity-25"
                 onClick={() => {
                   setSelectedCourseId(null);
@@ -1205,9 +1205,9 @@ const InstructorDashboard = () => {
 
               {/* Course Info Banner */}
               <div className="class-detail-banner">
-                <img 
-                  src={selectedCourse.image} 
-                  alt={selectedCourse.title} 
+                <img
+                  src={selectedCourse.image}
+                  alt={selectedCourse.title}
                   className="class-detail-banner-img"
                 />
                 <div className="class-detail-banner-info">
@@ -1216,7 +1216,7 @@ const InstructorDashboard = () => {
                     <span className={`badge ${selectedCourse.status === 'Published' ? 'bg-success' : 'bg-secondary'}`}>{selectedCourse.status}</span>
                   </div>
                   <h2 className="fw-bold text-white h3 mb-2">{selectedCourse.title}</h2>
-                  
+
                   <div className="d-flex align-items-center gap-4 text-muted small flex-wrap mt-3">
                     <div className="d-flex align-items-center gap-1.5">
                       <Calendar size={14} className="text-secondary" />
@@ -1248,58 +1248,58 @@ const InstructorDashboard = () => {
                   ) : (
                     courseSyllabus[selectedCourse.id].map((season, seasonIdx) => (
                       <div className="season-block" key={season.id}>
-                      <div className="season-block-header"
-                        onClick={() => toggleSeasonCollapse(season.id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="season-block-title">
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'transform 0.25s ease',
-                              transform: collapsedSeasons[season.id] ? 'rotate(0deg)' : 'rotate(90deg)'
-                            }}
-                          >
-                            <ChevronRight size={16} className="text-secondary" />
-                          </span>
-                          <BookOpenCheck size={18} className="text-secondary" />
-                          <span>{season.name}</span>
-                          <span className="badge bg-secondary bg-opacity-25 text-white" style={{ fontSize: '0.75rem' }}>
-                            {season.videos.length} Videos
-                          </span>
-                        </div>
+                        <div className="season-block-header"
+                          onClick={() => toggleSeasonCollapse(season.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className="season-block-title">
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.25s ease',
+                                transform: collapsedSeasons[season.id] ? 'rotate(0deg)' : 'rotate(90deg)'
+                              }}
+                            >
+                              <ChevronRight size={16} className="text-secondary" />
+                            </span>
+                            <BookOpenCheck size={18} className="text-secondary" />
+                            <span>{season.name}</span>
+                            <span className="badge bg-secondary bg-opacity-25 text-white" style={{ fontSize: '0.75rem' }}>
+                              {season.videos.length} Videos
+                            </span>
+                          </div>
 
-                        <div className="d-flex align-items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <button 
-                            className="btn btn-outline-secondary btn-sm text-white border-secondary border-opacity-25 d-inline-flex align-items-center gap-1"
-                            onClick={() => {
-                              if (activeSeasonInputId === season.id) {
-                                setActiveSeasonInputId(null);
-                              } else {
-                                setActiveSeasonInputId(season.id);
-                                setVideoTitleForm('');
-                                setVideoFileData(null);
-                                if (videoFileRef.current) videoFileRef.current.value = '';
-                                // auto-expand season when opening uploader
-                                setCollapsedSeasons(prev => ({ ...prev, [season.id]: false }));
-                              }
-                            }}
-                          >
-                            <Plus size={14} />
-                            <span>{activeSeasonInputId === season.id ? 'Close Uploader' : 'Add Video'}</span>
-                          </button>
-                          <button 
-                            className="btn btn-outline-danger btn-sm border-danger border-opacity-25 text-danger d-inline-flex align-items-center"
-                            onClick={() => handleDeleteSeason(selectedCourse.id, season.id)}
-                            title="Delete Season"
-                            style={{ padding: '0.35rem 0.5rem' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="d-flex align-items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className="btn btn-outline-secondary btn-sm text-white border-secondary border-opacity-25 d-inline-flex align-items-center gap-1"
+                              onClick={() => {
+                                if (activeSeasonInputId === season.id) {
+                                  setActiveSeasonInputId(null);
+                                } else {
+                                  setActiveSeasonInputId(season.id);
+                                  setVideoTitleForm('');
+                                  setVideoFileData(null);
+                                  if (videoFileRef.current) videoFileRef.current.value = '';
+                                  // auto-expand season when opening uploader
+                                  setCollapsedSeasons(prev => ({ ...prev, [season.id]: false }));
+                                }
+                              }}
+                            >
+                              <Plus size={14} />
+                              <span>{activeSeasonInputId === season.id ? 'Close Uploader' : 'Add Video'}</span>
+                            </button>
+                            <button
+                              className="btn btn-outline-danger btn-sm border-danger border-opacity-25 text-danger d-inline-flex align-items-center"
+                              onClick={() => handleDeleteSeason(selectedCourse.id, season.id)}
+                              title="Delete Season"
+                              style={{ padding: '0.35rem 0.5rem' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
                         {/* Video upload form inline */}
                         {activeSeasonInputId === season.id && (
@@ -1311,9 +1311,9 @@ const InstructorDashboard = () => {
                             <div className="row g-2 align-items-end">
                               <div className="col-12 col-md-5">
                                 <label className="form-label small text-muted mb-1" style={{ fontSize: '0.7rem' }}>VIDEO TITLE</label>
-                                <input 
-                                  type="text" 
-                                  className="form-control form-control-custom" 
+                                <input
+                                  type="text"
+                                  className="form-control form-control-custom"
                                   placeholder="e.g. Introduction to Backpropagation"
                                   value={videoTitleForm}
                                   onChange={(e) => setVideoTitleForm(e.target.value)}
@@ -1348,8 +1348,8 @@ const InstructorDashboard = () => {
                                 )}
                               </div>
                               <div className="col-12 col-md-2">
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="btn btn-primary-custom w-100"
                                   onClick={() => handleAddVideo(selectedCourse.id, season.id)}
                                   style={{ height: '42px' }}
@@ -1380,7 +1380,7 @@ const InstructorDashboard = () => {
                                       <Clock size={12} />
                                       <span>{vid.duration}</span>
                                     </span>
-                                    <button 
+                                    <button
                                       className="btn btn-link text-danger p-0"
                                       onClick={() => handleDeleteVideo(selectedCourse.id, season.id, vid.id)}
                                       title="Delete Video"
@@ -1402,16 +1402,16 @@ const InstructorDashboard = () => {
                 <div className="border-top border-secondary border-opacity-15 pt-4 mt-2">
                   <h4 className="h6 fw-bold text-white mb-3">Create New Curriculum Season Block</h4>
                   <div className="d-flex gap-2">
-                    <input 
-                      type="text" 
-                      className="form-control form-control-custom" 
+                    <input
+                      type="text"
+                      className="form-control form-control-custom"
                       placeholder="e.g. Advanced Optimization Methods"
                       value={newSeasonName}
                       onChange={(e) => setNewSeasonName(e.target.value)}
                       style={{ maxWidth: '400px' }}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-primary-custom d-inline-flex align-items-center gap-1.5"
                       onClick={() => handleAddSeason(selectedCourse.id)}
                     >
@@ -1466,8 +1466,8 @@ const InstructorDashboard = () => {
                           <td style={{ width: '200px' }}>
                             <div className="d-flex align-items-center gap-2">
                               <div className="progress bg-dark w-100" style={{ height: '6px' }}>
-                                <div 
-                                  className="progress-bar bg-ai-gradient" 
+                                <div
+                                  className="progress-bar bg-ai-gradient"
                                   style={{ width: `${student.progress}%` }}
                                 ></div>
                               </div>
@@ -1480,7 +1480,7 @@ const InstructorDashboard = () => {
                             </span>
                           </td>
                           <td>
-                            <button 
+                            <button
                               className="btn btn-link btn-sm text-ai-gradient p-0 text-decoration-none fw-bold"
                               onClick={() => triggerToast(`Message portal link generated for ${student.name}`, 'success')}
                             >
@@ -1505,12 +1505,12 @@ const InstructorDashboard = () => {
               </div>
 
               <div className="row g-4">
-                
+
                 {/* Active Plan details card */}
                 <div className="col-12 col-md-7">
                   <div className="glass-card p-4">
                     <span className="text-muted d-block small mb-2 uppercase fw-bold" style={{ letterSpacing: '0.05em' }}>CURRENT ACCOUNT TIER</span>
-                    
+
                     <div className="d-flex align-items-baseline gap-2 mb-3">
                       <h2 className="display-6 fw-bold text-white mb-0">{profileData.subscriptionPlan}</h2>
                       <span className="text-secondary fw-semibold">
@@ -1554,7 +1554,7 @@ const InstructorDashboard = () => {
                     {/* Manage and cancel plan actions */}
                     <div className="d-flex gap-3 flex-wrap pt-3 border-top border-secondary border-opacity-10">
                       {profileData.subscriptionPlan.includes('Free') ? (
-                        <button 
+                        <button
                           className="btn btn-primary-custom"
                           onClick={() => {
                             setProfileData(prev => ({
@@ -1569,15 +1569,15 @@ const InstructorDashboard = () => {
                         </button>
                       ) : (
                         <>
-                          <button 
+                          <button
                             className="btn btn-primary-custom"
                             onClick={handleUpgradePlan}
                             disabled={profileData.subscriptionPlan.includes('Enterprise')}
                           >
                             {profileData.subscriptionPlan.includes('Enterprise') ? 'Upgraded to Enterprise' : 'Upgrade to Enterprise ($99/mo)'}
                           </button>
-                          
-                          <button 
+
+                          <button
                             className="btn btn-outline-danger border-danger border-opacity-20 text-danger"
                             onClick={handleCancelPlan}
                           >
@@ -1593,7 +1593,7 @@ const InstructorDashboard = () => {
                 <div className="col-12 col-md-5">
                   <div className="glass-card p-4">
                     <h3 className="h5 fw-bold mb-4">Billing & Payments</h3>
-                    
+
                     <div className="mb-4">
                       <span className="text-muted d-block small">DEFAULT PAYMENT METHOD</span>
                       <div className="fw-semibold text-white d-flex align-items-center gap-2 mt-1">
@@ -1610,7 +1610,7 @@ const InstructorDashboard = () => {
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       className="btn btn-outline-secondary w-100 text-white border-secondary border-opacity-25"
                       onClick={() => triggerToast('Stripe billing portal opened', 'success')}
                     >
@@ -1635,48 +1635,48 @@ const InstructorDashboard = () => {
                 <div className="col-lg-8">
                   <div className="glass-card p-4">
                     <h3 className="h5 fw-bold mb-4">Edit Profile Info</h3>
-                    
+
                     <form onSubmit={(e) => { e.preventDefault(); triggerToast('Profile details updated!', 'success'); }}>
                       <div className="row g-3 mb-4">
                         <div className="col-md-6">
                           <label className="form-label small fw-bold">FULL NAME</label>
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             className="form-control form-control-custom"
                             value={profileData.name}
-                            onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                             required
                           />
                         </div>
                         <div className="col-md-6">
                           <label className="form-label small fw-bold">TITLE / CREDENTIALS</label>
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             className="form-control form-control-custom"
                             value={profileData.title}
-                            onChange={(e) => setProfileData({...profileData, title: e.target.value})}
+                            onChange={(e) => setProfileData({ ...profileData, title: e.target.value })}
                           />
                         </div>
                       </div>
 
                       <div className="mb-4">
                         <label className="form-label small fw-bold">EMAIL ADDRESS</label>
-                        <input 
-                          type="email" 
+                        <input
+                          type="email"
                           className="form-control form-control-custom"
                           value={profileData.email}
-                          onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                          onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                           required
                         />
                       </div>
 
                       <div className="mb-4">
                         <label className="form-label small fw-bold">BIO / DESCRIPTION</label>
-                        <textarea 
+                        <textarea
                           className="form-control form-control-custom"
                           rows="4"
                           value={profileData.bio}
-                          onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                          onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                         ></textarea>
                       </div>
 
@@ -1698,7 +1698,7 @@ const InstructorDashboard = () => {
                       <span className="text-muted d-block small">NEXT RENEWAL DATE</span>
                       <span className="fw-bold text-white">{profileData.renewalDate}</span>
                     </div>
-                    <button 
+                    <button
                       className="btn btn-outline-secondary w-100 text-white border-secondary border-opacity-25"
                       onClick={() => setActiveTab('manage-plan')}
                     >
@@ -1712,7 +1712,7 @@ const InstructorDashboard = () => {
                       <span className="text-muted d-block small">Payout Route</span>
                       <span className="fw-bold text-white">{profileData.payoutMethod}</span>
                     </div>
-                    <button 
+                    <button
                       className="btn btn-outline-secondary w-100 text-white border-secondary border-opacity-25"
                       onClick={() => triggerToast('Payout editing panel opened', 'success')}
                     >
@@ -1733,25 +1733,25 @@ const InstructorDashboard = () => {
           <div className="custom-modal-card animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <div className="custom-modal-header">
               <h3 className="h5 fw-bold mb-0 text-white">{editingCourse ? 'Edit Curriculum Class' : 'Build New Class Module'}</h3>
-              <button 
+              <button
                 className="btn btn-link text-muted p-0 text-decoration-none"
                 onClick={() => setCourseModalOpen(false)}
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleCourseSubmit}>
               <div className="custom-modal-body">
-                
+
                 <div className="mb-3">
                   <label className="form-label small fw-bold">COURSE TITLE</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control form-control-custom"
                     placeholder="e.g. Advanced AI Model Tuning"
                     value={courseForm.title}
-                    onChange={(e) => setCourseForm({...courseForm, title: e.target.value})}
+                    onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
                     required
                   />
                 </div>
@@ -1759,10 +1759,10 @@ const InstructorDashboard = () => {
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">CATEGORY</label>
-                    <select 
+                    <select
                       className="form-control form-control-custom text-white"
                       value={courseForm.category}
-                      onChange={(e) => setCourseForm({...courseForm, category: e.target.value})}
+                      onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
                       style={{ background: 'rgba(15, 23, 42, 0.9)' }}
                     >
                       <option value="AI & Data Science">AI & Data Science</option>
@@ -1772,16 +1772,16 @@ const InstructorDashboard = () => {
                       <option value="Cyber Security">Cyber Security</option>
                     </select>
                   </div>
-                  
+
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">PRICE ($ USD)</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.01"
                       className="form-control form-control-custom"
                       placeholder="99.00"
                       value={courseForm.price}
-                      onChange={(e) => setCourseForm({...courseForm, price: e.target.value})}
+                      onChange={(e) => setCourseForm({ ...courseForm, price: e.target.value })}
                       required
                     />
                   </div>
@@ -1791,30 +1791,30 @@ const InstructorDashboard = () => {
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">PUBLISH DATE</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       className="form-control form-control-custom text-white"
                       value={courseForm.publishDate}
-                      onChange={(e) => setCourseForm({...courseForm, publishDate: e.target.value})}
+                      onChange={(e) => setCourseForm({ ...courseForm, publishDate: e.target.value })}
                     />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">PUBLISH TIME</label>
-                    <input 
-                      type="time" 
+                    <input
+                      type="time"
                       className="form-control form-control-custom text-white"
                       value={courseForm.publishTime}
-                      onChange={(e) => setCourseForm({...courseForm, publishTime: e.target.value})}
+                      onChange={(e) => setCourseForm({ ...courseForm, publishTime: e.target.value })}
                     />
                   </div>
                 </div>
 
                 <div className="mb-3">
                   <label className="form-label small fw-bold">STATUS</label>
-                  <select 
+                  <select
                     className="form-control form-control-custom text-white"
                     value={courseForm.status}
-                    onChange={(e) => setCourseForm({...courseForm, status: e.target.value})}
+                    onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
                     style={{ background: 'rgba(15, 23, 42, 0.9)' }}
                   >
                     <option value="Published">Published (Public access)</option>
@@ -1856,8 +1856,8 @@ const InstructorDashboard = () => {
               </div>
 
               <div className="custom-modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
                   onClick={() => setCourseModalOpen(false)}
                 >
@@ -1878,20 +1878,20 @@ const InstructorDashboard = () => {
           <div className="custom-modal-card animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <div className="custom-modal-header">
               <h3 className="h5 fw-bold mb-0 text-white">Change Account Password</h3>
-              <button 
+              <button
                 className="btn btn-link text-muted p-0 text-decoration-none"
                 onClick={() => setChangePasswordModalOpen(false)}
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleChangePasswordSubmit}>
               <div className="custom-modal-body">
                 <div className="mb-3">
                   <label className="form-label small fw-bold">CURRENT PASSWORD</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     className="form-control form-control-custom"
                     placeholder="Enter current password"
                     value={currentPassword}
@@ -1899,11 +1899,11 @@ const InstructorDashboard = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label className="form-label small fw-bold">NEW PASSWORD</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     className="form-control form-control-custom"
                     placeholder="Enter new password"
                     value={newPassword}
@@ -1914,8 +1914,8 @@ const InstructorDashboard = () => {
 
                 <div className="mb-3">
                   <label className="form-label small fw-bold">CONFIRM NEW PASSWORD</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     className="form-control form-control-custom"
                     placeholder="Confirm new password"
                     value={confirmPassword}
@@ -1924,10 +1924,10 @@ const InstructorDashboard = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="custom-modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
                   onClick={() => setChangePasswordModalOpen(false)}
                 >
