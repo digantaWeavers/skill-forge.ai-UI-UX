@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Cpu, Eye, EyeOff } from 'lucide-react';
+import { authService } from '../../api/services/authService';
 
 const InstructorLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,11 +9,42 @@ const InstructorLogin = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleLogin = async (e) => {
     e.preventDefault();
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const payload = {
+        email: email,
+        password: password
+      };
+
+      const loginres = await authService.login(payload);
+      if (loginres) {
+        localStorage.setItem('accesstoken', loginres.accessToken);
+        localStorage.setItem('refreshtoken', loginres.refreshToken);
+        localStorage.setItem('user', JSON.stringify(loginres.user));
+
+        if (loginres.user.isSubscribed == false) {
+          navigate('/subscription/instructor');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Login failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
     // In a real application, you would authenticate here.
     // For this mockup, we just redirect to the dashboard.
-    navigate('/dashboard');
+    // navigate('/dashboard');
+    // setIsSubmitting(false);
   };
 
   return (

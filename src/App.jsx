@@ -8,6 +8,7 @@ import InstructorRegister from './pages/auth/InstructorRegister';
 import InstructorDashboard from './pages/dashboard/InstructorDashboard';
 import InstructorSubscription from './pages/subscription/InstructorSubscription';
 import InstructorBasicDetails from './pages/onboarding/InstructorBasicDetails';
+import { ProtectedRoute, SubscriptionRequiredRoute } from './components/ProtectedRoute';
 
 function App() {
   const location = useLocation();
@@ -23,9 +24,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/auth/login" element={<InstructorLogin />} />
           <Route path="/auth/register" element={<InstructorRegister />} />
-          <Route path="/subscription/instructor" element={<InstructorSubscription />} />
-          <Route path="/onboarding" element={<InstructorBasicDetails />} />
-          <Route path="/dashboard" element={<InstructorDashboard />} />
+          <Route path="/subscription/instructor" element={<ProtectedRoute><InstructorSubscription /></ProtectedRoute>} />
+          <Route path="/onboarding" element={<ProtectedRoute><InstructorBasicDetails /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<SubscriptionRequiredRoute><InstructorDashboard /></SubscriptionRequiredRoute>} />
 
           {/* Placeholder for other routes */}
           <Route path="*" element={

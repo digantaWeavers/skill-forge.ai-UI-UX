@@ -1,23 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User,
-  MapPin,
-  Building2,
-  Hash,
-  FileText,
-  Camera,
-  ArrowRight,
-  Globe,
-  Sparkles,
-  CheckCircle2
+  User, MapPin, Building2, Hash, FileText, Camera,
+  ArrowRight, Globe, Sparkles, CheckCircle2
 } from 'lucide-react';
 import './InstructorBasicDetails.css';
+import { userService } from '../../api/services/userService';
+import { authService } from '../../api/services/authService';
+import { useAuthTokensFromUrl } from '../../hooks/useAuthTokensFromUrl';
 
 const InstructorBasicDetails = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const [isLoading, setIsLoading] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,43 +25,72 @@ const InstructorBasicDetails = () => {
     country: '',
     bio: '',
     website: '',
-    headline: ''
+    headline: '',
+    profileImage: null
   });
 
   const [errors, setErrors] = useState({});
 
+  // Token handling
+  useAuthTokensFromUrl(() => {
+    verifyAuth();
+  });
+
+  const verifyAuth = async () => {
+    const token = localStorage.getItem('accesstoken');
+    if (!token) {
+      navigate('/auth/login');
+      return;
+    }
+
+    try {
+      const response = await authService.getMe();
+      if (response?.data) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+      localStorage.clear();
+      navigate('/auth/login');
+    }
+  };
+
+  useEffect(() => {
+    verifyAuth();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error on change
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, profileImage: 'Image must be under 5MB' }));
-        return;
-      }
-      setProfileImage(file);
-      setErrors(prev => ({ ...prev, profileImage: '' }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, profileImage: 'Image must be under 5MB' }));
+      return;
     }
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, profileImage: 'Please upload a valid image file' }));
+      return;
+    }
+
+    setErrors(prev => ({ ...prev, profileImage: '' }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      setProfilePreview(base64String);
+      setFormData(prev => ({ ...prev, profileImage: base64String }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleImageClick = () => fileInputRef.current?.click();
 
   const validate = () => {
     const newErrors = {};
@@ -75,90 +100,101 @@ const InstructorBasicDetails = () => {
     else if (!/^\d{4,10}$/.test(formData.pincode.trim())) newErrors.pincode = 'Enter a valid pincode';
     if (!formData.bio.trim()) newErrors.bio = 'Bio is required';
     else if (formData.bio.trim().length < 20) newErrors.bio = 'Bio must be at least 20 characters';
-    if (!profileImage && !profilePreview) newErrors.profileImage = 'Profile picture is required';
+    if (!profilePreview) newErrors.profileImage = 'Profile picture is required';
+
     return newErrors;
   };
 
   const isFormValid = () => {
-    return (
-      formData.city.trim() &&
+    return formData.city.trim() &&
       formData.state.trim() &&
       formData.pincode.trim() &&
       formData.bio.trim().length >= 20 &&
-      (profileImage || profilePreview)
-    );
+      profilePreview;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
+
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const payload = {
+        profilePicture: formData.profileImage,
+        bio: formData.bio,
+        headline: formData.headline,
+        address: {
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          country: formData.country || 'India'
+        },
+        website: formData.website
+      };
+
+      await userService.updateProfile(payload);
+
+      // Update local user
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      Object.assign(localUser, {
+        bio: formData.bio,
+        headline: formData.headline,
+        profilePicture: formData.profileImage,
+        address: payload.address
+      });
+      localStorage.setItem('user', JSON.stringify(localUser));
+
       navigate('/dashboard');
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      setErrors({ submit: error.message || 'Failed to update profile' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const bioCharCount = formData.bio.length;
   const bioMaxChars = 500;
 
+  if (isLoading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status" />
+          <p className="mt-3 text-muted">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="onboarding-page">
-      {/* Animated background */}
       <div className="onboarding-bg-orb onboarding-bg-orb-1"></div>
       <div className="onboarding-bg-orb onboarding-bg-orb-2"></div>
 
       <div className="container py-5">
-        {/* Progress indicator */}
-        {/* <div className="onboarding-progress-bar animate-fade-in">
-          <div className="onboarding-step completed">
-            <CheckCircle2 size={20} />
-            <span>Register</span>
-          </div>
-          <div className="onboarding-step-line completed"></div>
-          <div className="onboarding-step completed">
-            <CheckCircle2 size={20} />
-            <span>Verify</span>
-          </div>
-          <div className="onboarding-step-line completed"></div>
-          <div className="onboarding-step completed">
-            <CheckCircle2 size={20} />
-            <span>Subscribe</span>
-          </div>
-          <div className="onboarding-step-line active"></div>
-          <div className="onboarding-step active">
-            <div className="onboarding-step-dot"></div>
-            <span>Profile</span>
-          </div>
-        </div> */}
-
-        {/* Header */}
         <div className="text-center mb-5 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="onboarding-badge mx-auto mb-3">
             <Sparkles size={14} />
             <span>FINAL STEP</span>
           </div>
           <h1 className="onboarding-title">
-            Complete Your
-            <span className="text-ai-gradient"> Instructor Profile</span>
+            Complete Your <span className="text-ai-gradient">Instructor Profile</span>
           </h1>
           <p className="onboarding-subtitle">
             Tell us a bit more about yourself so students can discover and connect with you.
           </p>
         </div>
 
-        {/* Form Card */}
         <div className="row justify-content-center">
           <div className="col-lg-7 col-md-9">
             <div className="onboarding-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <form onSubmit={handleSubmit}>
-
-                {/* Profile Picture Section */}
+                {/* Profile Picture */}
                 <div className="onboarding-avatar-section">
                   <div
                     className={`onboarding-avatar-upload ${errors.profileImage ? 'has-error' : ''}`}
@@ -183,19 +219,15 @@ const InstructorBasicDetails = () => {
                       style={{ display: 'none' }}
                     />
                   </div>
-                  {errors.profileImage && (
-                    <p className="onboarding-error-text">{errors.profileImage}</p>
-                  )}
+                  {errors.profileImage && <p className="onboarding-error-text">{errors.profileImage}</p>}
                   <p className="onboarding-avatar-hint">JPG, PNG or WebP · Max 5MB</p>
                 </div>
 
                 {/* Headline */}
                 <div className="mb-4">
                   <label className="form-label small fw-bold">PROFESSIONAL HEADLINE</label>
-                  <div className={`input-group-custom ${errors.headline ? 'has-error' : ''}`}>
-                    <span className="input-group-text">
-                      <User size={18} />
-                    </span>
+                  <div className="input-group-custom">
+                    <span className="input-group-text"><User size={18} /></span>
                     <input
                       type="text"
                       name="headline"
@@ -213,9 +245,7 @@ const InstructorBasicDetails = () => {
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">CITY <span className="text-danger">*</span></label>
                     <div className={`input-group-custom ${errors.city ? 'has-error' : ''}`}>
-                      <span className="input-group-text">
-                        <Building2 size={18} />
-                      </span>
+                      <span className="input-group-text"><Building2 size={18} /></span>
                       <input
                         type="text"
                         name="city"
@@ -230,9 +260,7 @@ const InstructorBasicDetails = () => {
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">STATE <span className="text-danger">*</span></label>
                     <div className={`input-group-custom ${errors.state ? 'has-error' : ''}`}>
-                      <span className="input-group-text">
-                        <MapPin size={18} />
-                      </span>
+                      <span className="input-group-text"><MapPin size={18} /></span>
                       <input
                         type="text"
                         name="state"
@@ -251,9 +279,7 @@ const InstructorBasicDetails = () => {
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">PINCODE / ZIP <span className="text-danger">*</span></label>
                     <div className={`input-group-custom ${errors.pincode ? 'has-error' : ''}`}>
-                      <span className="input-group-text">
-                        <Hash size={18} />
-                      </span>
+                      <span className="input-group-text"><Hash size={18} /></span>
                       <input
                         type="text"
                         name="pincode"
@@ -269,9 +295,7 @@ const InstructorBasicDetails = () => {
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">COUNTRY</label>
                     <div className="input-group-custom">
-                      <span className="input-group-text">
-                        <Globe size={18} />
-                      </span>
+                      <span className="input-group-text"><Globe size={18} /></span>
                       <input
                         type="text"
                         name="country"
@@ -288,9 +312,7 @@ const InstructorBasicDetails = () => {
                 <div className="mb-4">
                   <label className="form-label small fw-bold">WEBSITE / PORTFOLIO</label>
                   <div className="input-group-custom">
-                    <span className="input-group-text">
-                      <Globe size={18} />
-                    </span>
+                    <span className="input-group-text"><Globe size={18} /></span>
                     <input
                       type="url"
                       name="website"
@@ -311,7 +333,7 @@ const InstructorBasicDetails = () => {
                       name="bio"
                       className="form-control"
                       rows={4}
-                      placeholder="Tell students about your expertise, teaching style, and what makes you passionate about education..."
+                      placeholder="Tell students about your expertise, teaching style..."
                       value={formData.bio}
                       onChange={handleChange}
                       maxLength={bioMaxChars}
@@ -325,7 +347,8 @@ const InstructorBasicDetails = () => {
                   </div>
                 </div>
 
-                {/* Submit */}
+                {errors.submit && <div className="alert alert-danger">{errors.submit}</div>}
+
                 <button
                   type="submit"
                   className="btn btn-primary-custom w-100 py-3 onboarding-submit-btn"

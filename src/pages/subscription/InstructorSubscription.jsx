@@ -1,24 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Crown,
-  Check,
-  Zap,
-  Users,
-  BarChart3,
-  BookOpen,
-  Video,
-  Shield,
-  Sparkles,
-  ArrowRight,
-  Star,
-  Infinity
+  Crown, Check, Zap, Users, BarChart3, BookOpen, Video,
+  Shield, Sparkles, ArrowRight, Star, Infinity
 } from 'lucide-react';
 import './InstructorSubscription.css';
+import { userService } from '../../api/services/userService';
+import { authService } from '../../api/services/authService';
+import { useAuthTokensFromUrl } from '../../hooks/useAuthTokensFromUrl';
 
 const InstructorSubscription = () => {
-  const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
+  // const navigate = useNavigate();
+  // const [isProcessing, setIsProcessing] = useState(false);
+  // const [isLoading, setIsLoading] = useState(true);
 
   const planFeatures = [
     { icon: <BookOpen size={18} />, text: 'Unlimited Course Creation', highlight: true },
@@ -31,55 +25,144 @@ const InstructorSubscription = () => {
     { icon: <Infinity size={18} />, text: 'Lifetime Platform Updates', highlight: false },
   ];
 
-  const handleSubscribe = () => {
+  // Improved token handling
+  // useAuthTokensFromUrl(() => {
+  //   verifyAuth();
+  // });
+
+  // const verifyAuth = async () => {
+  //   const token = localStorage.getItem('accesstoken');
+  //   if (!token) {
+  //     navigate('/auth/login');
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await authService.getMe();
+  //     if (response?.data) {
+  //       localStorage.setItem('user', JSON.stringify(response.data));
+  //     }
+  //     setIsLoading(false);
+  //   } catch (error) {
+  //     console.error('Auth verification failed:', error);
+  //     localStorage.clear();
+  //     navigate('/auth/login');
+  //   }
+  // };
+
+  // // Initial check
+  // useEffect(() => {
+  //   verifyAuth();
+  // }, []);
+
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+
+  useAuthTokensFromUrl();
+
+  // Strong verification with retry
+  useEffect(() => {
+    let retries = 0;
+    const maxRetries = 8;
+
+    const verifyTokens = async () => {
+      const accessToken = localStorage.getItem('accesstoken');
+
+      if (accessToken) {
+        try {
+          const res = await authService.getMe();
+          if (res?.data) {
+            localStorage.setItem('user', JSON.stringify(res.data));
+          }
+          setIsVerifying(false);
+          return;
+        } catch (err) {
+          console.error('Token verification failed', err);
+        }
+      }
+
+      if (retries < maxRetries) {
+        retries++;
+        setTimeout(verifyTokens, 300); // retry every 300ms
+      } else {
+        setIsVerifying(false);
+        navigate('/auth/login');
+      }
+    };
+
+    verifyTokens();
+  }, [navigate]);
+
+  if (isVerifying) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} />
+          <p>Securing your session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubscribe = async () => {
     setIsProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      const subscriptionData = {
+        planId: 'plan_Sx7YPh6mZj0v5B',
+      };
+
+      const response = await userService.getSubcriptionLink(subscriptionData);
+      if (response?.data) {
+        window.location.href = response.data;
+      }
+    } catch (error) {
+      console.error('Error creating subscription link:', error);
+      alert('Failed to create subscription link. Please try again.');
+    } finally {
       setIsProcessing(false);
-      // alert('Subscription activated successfully!');
-      navigate('/onboarding');
-    }, 2000);
+    }
   };
 
-  const handleSkip = () => {
-    navigate('/dashboard');
-  };
+  if (isLoading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status" />
+          <p className="mt-3 text-muted">Verifying your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="subscription-page">
-      {/* Animated background orbs */}
       <div className="subscription-bg-orb subscription-bg-orb-1"></div>
       <div className="subscription-bg-orb subscription-bg-orb-2"></div>
       <div className="subscription-bg-orb subscription-bg-orb-3"></div>
 
       <div className="container py-5">
-        {/* Header Section */}
         <div className="text-center mb-5 animate-fade-in">
           <div className="subscription-badge mx-auto mb-3">
             <Sparkles size={14} />
             <span>EXCLUSIVE INSTRUCTOR PLAN</span>
           </div>
           <h1 className="subscription-title">
-            Unlock Your Full
-            <span className="text-ai-gradient"> Teaching Potential</span>
+            Unlock Your Full <span className="text-ai-gradient">Teaching Potential</span>
           </h1>
           <p className="subscription-subtitle">
-            Get everything you need to create, manage, and grow your online courses
-            with our all-in-one instructor plan.
+            Get everything you need to create, manage, and grow your online courses.
           </p>
         </div>
 
-        {/* Plan Card */}
         <div className="row justify-content-center">
           <div className="col-lg-6 col-md-8">
             <div className="subscription-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              {/* Popular tag */}
               <div className="subscription-popular-tag">
                 <Star size={14} />
                 <span>BEST VALUE</span>
               </div>
 
-              {/* Card Header */}
               <div className="subscription-card-header">
                 <div className="subscription-plan-icon">
                   <Crown size={28} color="white" />
@@ -90,7 +173,6 @@ const InstructorSubscription = () => {
                 </p>
               </div>
 
-              {/* Price */}
               <div className="subscription-price-section">
                 <div className="subscription-price-wrapper">
                   <span className="subscription-currency">$</span>
@@ -106,10 +188,8 @@ const InstructorSubscription = () => {
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="subscription-divider"></div>
 
-              {/* Features */}
               <div className="subscription-features">
                 <h6 className="subscription-features-title">Everything included:</h6>
                 <ul className="subscription-features-list">
@@ -129,7 +209,6 @@ const InstructorSubscription = () => {
                 </ul>
               </div>
 
-              {/* CTA Button */}
               <button
                 className="subscription-cta-btn"
                 onClick={handleSubscribe}
@@ -148,22 +227,10 @@ const InstructorSubscription = () => {
                 )}
               </button>
 
-              {/* Guarantee */}
               <div className="subscription-guarantee">
                 <Shield size={16} />
                 <span>30-day money-back guarantee · Cancel anytime</span>
               </div>
-            </div>
-
-            {/* Skip link */}
-            <div className="text-center mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              <button
-                className="subscription-skip-btn"
-                onClick={handleSkip}
-              >
-                Skip for now, I'll explore the free tier
-                <ArrowRight size={14} />
-              </button>
             </div>
           </div>
         </div>

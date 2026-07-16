@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, Cpu, Phone, Eye, EyeOff, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { authService } from '../../api/services/authService';
 
 const InstructorRegister = () => {
   const navigate = useNavigate();
@@ -79,42 +80,100 @@ const InstructorRegister = () => {
     return verificationData.emailCode.trim().length >= 4 && verificationData.phoneCode.trim().length >= 4;
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (!isFormValid() || isSubmitting) return;
 
     setIsSubmitting(true);
     setErrorMessage('');
 
-    setTimeout(() => {
+    try {
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        username: formData.username,
+        phoneNumber: formData.phone,
+        password: formData.confirmPassword,
+        role: roleFromUrl,
+        provideType: "manual"
+      };
+
+      const res = await authService.register(payload);
+      // console.log(res);
+
+      if (res) {
+        setTimeout(() => {
+          setStep(2);
+        }, 1500);
+      } else {
+        setErrorMessage(res.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Registration failed. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setStep(2);
-    }, 1500);
+    }
   };
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     if (!isVerificationValid() || isSubmitting) return;
 
     setIsSubmitting(true);
     setErrorMessage('');
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      if (formData.role === 'instructor') {
-        navigate('/subscription/instructor');
+    try {
+      const payload = {
+        email: formData.email,
+        phoneNumber: formData.phone,
+        emailOtp: verificationData.emailCode,
+        mobileOtp: verificationData.phoneCode
+      };
+
+      const verificationres = await authService.verifyOtp(payload);
+      // console.log(verificationres);
+      if (verificationres) {
+        localStorage.setItem('accesstoken', verificationres.accessToken);
+        localStorage.setItem('refreshtoken', verificationres.refreshToken);
+        localStorage.setItem('user', JSON.stringify(verificationres.user));
+
+        setTimeout(() => {
+          setIsSubmitting(false);
+          if (formData.role === 'instructor') {
+            navigate('/subscription/instructor');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 1500);
       } else {
-        navigate('/dashboard');
+        setErrorMessage(res.message || 'verification failed. Please try again.');
       }
-    }, 1500);
+    } catch (error) {
+      setErrorMessage(error.message || 'verification failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSocialLogin = (provider) => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    setErrorMessage('');
+
+    try {
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+      if (provider === 'google') {
+        window.location.href = `${backendUrl}/auth/google?role=${formData.role}`;
+      }
+
+      if (provider === 'github') {
+        window.location.href = `${backendUrl}/auth/github?role=${formData.role}`;
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Social login failed. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      navigate('/dashboard');
-    }, 1000);
+    }
   };
 
   if (step === 2) {
