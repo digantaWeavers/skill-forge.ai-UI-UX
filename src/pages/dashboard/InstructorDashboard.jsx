@@ -33,7 +33,8 @@ import {
   Calendar,
   Clock,
   Upload,
-  ImagePlus
+  ImagePlus,
+  Link2
 } from 'lucide-react';
 import './InstructorDashboard.css';
 
@@ -45,13 +46,27 @@ const InstructorDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [classSearchQuery, setClassSearchQuery] = useState('');
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [classCategoryFilter, setClassCategoryFilter] = useState('All');
+  const [classPage, setClassPage] = useState(1);
+  const classesPerPage = 8;
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setClassSearchQuery('');
+    setStudentSearchQuery('');
+    setSelectedCourseId(null);
+    setClassPage(1);
+  };
 
   // Modals state
   const [courseModalOpen, setCourseModalOpen] = useState(false);
   const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null); // null when adding new course
+  const [seasonModalOpen, setSeasonModalOpen] = useState(false); // Add Season popup
+  const [editingSeasonId, setEditingSeasonId] = useState(null); // ID of the season being edited
 
   // Class details state
   const [selectedCourseId, setSelectedCourseId] = useState(null);
@@ -177,7 +192,11 @@ const InstructorDashboard = () => {
   const [newSeasonName, setNewSeasonName] = useState('');
   const [videoTitleForm, setVideoTitleForm] = useState('');
   const [videoFileData, setVideoFileData] = useState(null); // { name, duration, objectUrl }
-  const [activeSeasonInputId, setActiveSeasonInputId] = useState(null);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [selectedSeasonIdForVideo, setSelectedSeasonIdForVideo] = useState(null);
+  const [videoDescForm, setVideoDescForm] = useState('');
+  const [videoUrlForm, setVideoUrlForm] = useState('');
+  const [videoSourceType, setVideoSourceType] = useState('file'); // 'file' | 'url'
   const [collapsedSeasons, setCollapsedSeasons] = useState({}); // seasonId -> bool
 
   // Refs for file inputs
@@ -215,9 +234,11 @@ const InstructorDashboard = () => {
   // Course Form State (for adding/editing)
   const [courseForm, setCourseForm] = useState({
     title: '',
+    description: '',
     category: 'AI & Data Science',
-    price: '',
-    status: 'Published',
+    regularPrice: '',
+    salePrice: '',
+    status: 'Active',
     image: '',        // URL string (for existing courses)
     imagePreview: '', // local blob URL for newly uploaded image
     publishDate: '',
@@ -269,10 +290,11 @@ const InstructorDashboard = () => {
     setCourseForm(prev => ({ ...prev, imagePreview: objectUrl, image: '' }));
   };
 
-  // Video file: local file -> auto-compute duration
-  const handleVideoFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const processVideoFile = (file) => {
+    if (!file || !file.type.startsWith('video/')) {
+      triggerToast('Please choose a valid video file', 'danger');
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
     const video = document.createElement('video');
     video.preload = 'metadata';
@@ -281,20 +303,65 @@ const InstructorDashboard = () => {
       const m = String(Math.floor(secs / 60)).padStart(2, '0');
       const s = String(secs % 60).padStart(2, '0');
       setVideoFileData({ name: file.name, duration: `${m}:${s}`, objectUrl });
+      setVideoSourceType('file');
+      setVideoUrlForm('');
       URL.revokeObjectURL(objectUrl);
     };
     video.src = objectUrl;
   };
 
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) processVideoFile(file);
+  };
+
+  const handleVideoDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) processVideoFile(file);
+  };
+
+  const handleVideoDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const openVideoModal = (seasonId = null) => {
+    setSelectedSeasonIdForVideo(seasonId);
+    setVideoTitleForm('');
+    setVideoDescForm('');
+    setVideoUrlForm('');
+    setVideoFileData(null);
+    setVideoSourceType('file');
+    if (videoFileRef.current) videoFileRef.current.value = '';
+    setVideoModalOpen(true);
+    if (seasonId) {
+      setCollapsedSeasons(prev => ({ ...prev, [seasonId]: false }));
+    }
+  };
+
+  const closeVideoModal = () => {
+    setVideoModalOpen(false);
+    setSelectedSeasonIdForVideo(null);
+    setVideoTitleForm('');
+    setVideoDescForm('');
+    setVideoUrlForm('');
+    setVideoFileData(null);
+    setVideoSourceType('file');
+    if (videoFileRef.current) videoFileRef.current.value = '';
+  };
+
   // Add Course / Edit Course Submit
   const handleCourseSubmit = (e) => {
     e.preventDefault();
-    if (!courseForm.title.trim() || !courseForm.price) {
+    if (!courseForm.title.trim() || !courseForm.regularPrice) {
       triggerToast('Please fill out all required fields', 'danger');
       return;
     }
 
-    const priceNum = parseFloat(courseForm.price);
+    const priceNum = parseFloat(courseForm.regularPrice);
+    const salePriceNum = courseForm.salePrice ? parseFloat(courseForm.salePrice) : null;
     // prefer locally uploaded image preview; fall back to URL; fall back to default
     const imageUrl = courseForm.imagePreview || courseForm.image.trim() || 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=400&q=80';
     const finalDate = courseForm.publishDate.trim() || new Date().toISOString().split('T')[0];
@@ -304,8 +371,10 @@ const InstructorDashboard = () => {
       setCourses(prev => prev.map(c => c.id === editingCourse.id ? {
         ...c,
         title: courseForm.title,
+        description: courseForm.description,
         category: courseForm.category,
         price: priceNum,
+        salePrice: salePriceNum,
         status: courseForm.status,
         image: imageUrl,
         publishDate: finalDate,
@@ -318,8 +387,10 @@ const InstructorDashboard = () => {
       const newCourse = {
         id: newCourseId,
         title: courseForm.title,
+        description: courseForm.description,
         category: courseForm.category,
         price: priceNum,
+        salePrice: salePriceNum,
         students: 0,
         rating: 5.0,
         status: courseForm.status,
@@ -338,7 +409,7 @@ const InstructorDashboard = () => {
 
     setCourseModalOpen(false);
     setEditingCourse(null);
-    setCourseForm({ title: '', category: 'AI & Data Science', price: '', status: 'Published', image: '', imagePreview: '', publishDate: '', publishTime: '' });
+    setCourseForm({ title: '', description: '', category: 'AI & Data Science', regularPrice: '', salePrice: '', status: 'Active', image: '', imagePreview: '', publishDate: '', publishTime: '' });
     if (imageFileRef.current) imageFileRef.current.value = '';
   };
 
@@ -347,8 +418,10 @@ const InstructorDashboard = () => {
     setEditingCourse(course);
     setCourseForm({
       title: course.title,
+      description: course.description || '',
       category: course.category,
-      price: course.price.toString(),
+      regularPrice: course.price.toString(),
+      salePrice: course.salePrice ? course.salePrice.toString() : '',
       status: course.status,
       image: course.image,
       imagePreview: '', // no new image selected yet
@@ -399,20 +472,31 @@ const InstructorDashboard = () => {
       return;
     }
 
-    const seasonNumber = (courseSyllabus[courseId]?.length || 0) + 1;
-    const newSeason = {
-      id: Date.now(),
-      name: `Season ${seasonNumber}: ${newSeasonName}`,
-      videos: []
-    };
+    if (editingSeasonId) {
+      setCourseSyllabus(prev => ({
+        ...prev,
+        [courseId]: (prev[courseId] || []).map(s => 
+          s.id === editingSeasonId ? { ...s, name: newSeasonName } : s
+        )
+      }));
+      triggerToast('Season updated successfully!', 'success');
+      setEditingSeasonId(null);
+    } else {
+      const seasonNumber = (courseSyllabus[courseId]?.length || 0) + 1;
+      const newSeason = {
+        id: Date.now(),
+        name: `Season ${seasonNumber}: ${newSeasonName}`,
+        videos: []
+      };
 
-    setCourseSyllabus(prev => ({
-      ...prev,
-      [courseId]: [...(prev[courseId] || []), newSeason]
-    }));
+      setCourseSyllabus(prev => ({
+        ...prev,
+        [courseId]: [...(prev[courseId] || []), newSeason]
+      }));
+      triggerToast('Season created successfully!', 'success');
+    }
 
     setNewSeasonName('');
-    triggerToast('Season created successfully!', 'success');
   };
 
   const handleDeleteSeason = (courseId, seasonId) => {
@@ -425,21 +509,33 @@ const InstructorDashboard = () => {
     }
   };
 
-  const handleAddVideo = (courseId, seasonId) => {
+  const handleAddVideo = (courseId) => {
+    const seasonId = selectedSeasonIdForVideo;
+    if (!seasonId) {
+      triggerToast('Please select a season for the video', 'danger');
+      return;
+    }
     if (!videoTitleForm.trim()) {
       triggerToast('Please enter a video title', 'danger');
       return;
     }
-    if (!videoFileData) {
+    if (videoSourceType === 'file' && !videoFileData) {
       triggerToast('Please choose a video file to upload', 'danger');
+      return;
+    }
+    if (videoSourceType === 'url' && !videoUrlForm.trim()) {
+      triggerToast('Please enter a video URL', 'danger');
       return;
     }
 
     const newVideo = {
       id: Date.now(),
       title: videoTitleForm,
-      duration: videoFileData.duration,
-      fileName: videoFileData.name
+      description: videoDescForm,
+      sourceType: videoSourceType,
+      url: videoSourceType === 'url' ? videoUrlForm : null,
+      duration: videoSourceType === 'file' ? videoFileData.duration : 'TBD',
+      fileName: videoSourceType === 'file' ? videoFileData.name : null
     };
 
     setCourseSyllabus(prev => {
@@ -452,10 +548,7 @@ const InstructorDashboard = () => {
       return { ...prev, [courseId]: updatedSeasons };
     });
 
-    setVideoTitleForm('');
-    setVideoFileData(null);
-    if (videoFileRef.current) videoFileRef.current.value = '';
-    setActiveSeasonInputId(null);
+    closeVideoModal();
     triggerToast('Video added to season successfully!', 'success');
   };
 
@@ -512,15 +605,19 @@ const InstructorDashboard = () => {
   const activeCoursesCount = courses.filter(c => c.status === 'Published').length;
 
   // Filtered lists
-  const filteredCourses = courses.filter(c =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.category.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCoursesFull = courses.filter(c =>
+    (classCategoryFilter === 'All' || c.category === classCategoryFilter) &&
+    (c.title.toLowerCase().includes(classSearchQuery.toLowerCase()) ||
+    c.category.toLowerCase().includes(classSearchQuery.toLowerCase()))
   );
 
+  const totalClassPages = Math.ceil(filteredCoursesFull.length / classesPerPage);
+  const filteredCourses = filteredCoursesFull.slice((classPage - 1) * classesPerPage, classPage * classesPerPage);
+
   const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.courseTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    s.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+    s.email.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+    s.courseTitle.toLowerCase().includes(studentSearchQuery.toLowerCase())
   );
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
@@ -547,7 +644,7 @@ const InstructorDashboard = () => {
           <li className="sidebar-menu-item">
             <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('overview'); setSearchQuery(''); setSelectedCourseId(null); }}
+              onClick={() => handleTabChange('overview')}
             >
               <LayoutDashboard size={20} />
               <span>Overview</span>
@@ -556,7 +653,7 @@ const InstructorDashboard = () => {
           <li className="sidebar-menu-item">
             <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${(activeTab === 'classes' || activeTab === 'class-detail') ? 'active' : ''}`}
-              onClick={() => { setActiveTab('classes'); setSearchQuery(''); setSelectedCourseId(null); }}
+              onClick={() => handleTabChange('classes')}
             >
               <BookOpen size={20} />
               <span>Manage Classes</span>
@@ -565,7 +662,7 @@ const InstructorDashboard = () => {
           <li className="sidebar-menu-item">
             <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'students' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('students'); setSearchQuery(''); setSelectedCourseId(null); }}
+              onClick={() => handleTabChange('students')}
             >
               <Users size={20} />
               <span>Enrolled Students</span>
@@ -573,8 +670,17 @@ const InstructorDashboard = () => {
           </li>
           <li className="sidebar-menu-item">
             <button
+              className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'earnings' ? 'active' : ''}`}
+              onClick={() => handleTabChange('earnings')}
+            >
+              <DollarSign size={20} />
+              <span>Earnings</span>
+            </button>
+          </li>
+          <li className="sidebar-menu-item">
+            <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'manage-plan' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('manage-plan'); setSearchQuery(''); setSelectedCourseId(null); }}
+              onClick={() => handleTabChange('manage-plan')}
             >
               <CreditCard size={20} />
               <span>Manage My Plan</span>
@@ -583,7 +689,7 @@ const InstructorDashboard = () => {
           <li className="sidebar-menu-item">
             <button
               className={`sidebar-link w-100 border-0 text-start bg-transparent ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('profile'); setSearchQuery(''); setSelectedCourseId(null); }}
+              onClick={() => handleTabChange('profile')}
             >
               <Settings size={20} />
               <span>Profile Settings</span>
@@ -617,21 +723,6 @@ const InstructorDashboard = () => {
             >
               <Menu size={20} />
             </button>
-
-            <div className="topbar-search-wrapper">
-              <Search className="topbar-search-icon" size={18} />
-              <input
-                type="text"
-                className="topbar-search-input"
-                placeholder={
-                  activeTab === 'classes' ? "Search your classes..." :
-                    activeTab === 'students' ? "Search enrolled students..." :
-                      "Search everything..."
-                }
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
           </div>
 
           <div className="topbar-right">
@@ -1027,6 +1118,38 @@ const InstructorDashboard = () => {
                 </div>
               </div>
 
+              {/* Class Management Tools (Search & Filter) */}
+              <div className="glass-card p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div className="d-flex align-items-center gap-3 flex-grow-1" style={{ maxWidth: '400px' }}>
+                  <div className="position-relative flex-grow-1">
+                    <Search className="position-absolute text-muted" size={18} style={{ left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="text"
+                      className="form-control form-control-custom ps-5"
+                      placeholder="Search your classes..."
+                      value={classSearchQuery}
+                      onChange={(e) => { setClassSearchQuery(e.target.value); setClassPage(1); }}
+                    />
+                  </div>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span className="text-muted small fw-semibold">CATEGORY:</span>
+                  <select
+                    className="form-select form-control-custom"
+                    style={{ width: '180px', cursor: 'pointer' }}
+                    value={classCategoryFilter}
+                    onChange={(e) => { setClassCategoryFilter(e.target.value); setClassPage(1); }}
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="AI & Data Science">AI &amp; Data Science</option>
+                    <option value="Machine Learning">Machine Learning</option>
+                    <option value="UI/UX Design">UI/UX Design</option>
+                    <option value="Web Development">Web Development</option>
+                    <option value="Cyber Security">Cyber Security</option>
+                  </select>
+                </div>
+              </div>
+
               {filteredCourses.length === 0 ? (
                 <div className="glass-card text-center py-5">
                   <div className="text-muted mb-3">No classes matched your search query.</div>
@@ -1080,7 +1203,7 @@ const InstructorDashboard = () => {
 
                           <div className="d-flex justify-content-between align-items-center mt-auto gap-2">
                             <span className="text-warning small fw-bold" style={{ fontSize: '0.8rem' }}>⭐ {course.rating.toFixed(1)}</span>
-                            <div className="d-flex gap-1.5">
+                            <div className="d-flex gap-3">
                               <button
                                 className="btn btn-outline-secondary p-1.5 text-white border-secondary border-opacity-25"
                                 onClick={() => {
@@ -1153,7 +1276,7 @@ const InstructorDashboard = () => {
                             <span className="fw-bold text-white h5 mb-0">${course.price.toFixed(2)}</span>
                           </div>
 
-                          <div className="d-flex gap-2">
+                          <div className="d-flex gap-3">
                             <button
                               className="btn btn-outline-secondary p-2 text-white border-secondary border-opacity-25"
                               onClick={() => {
@@ -1183,6 +1306,38 @@ const InstructorDashboard = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Class Pagination */}
+              {totalClassPages > 1 && (
+                <div className="d-flex justify-content-center align-items-center gap-2 mt-4">
+                  <button
+                    className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
+                    disabled={classPage === 1}
+                    onClick={() => setClassPage(p => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </button>
+                  <div className="d-flex align-items-center gap-1">
+                    {Array.from({ length: totalClassPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        className={`btn ${classPage === i + 1 ? 'btn-primary-custom' : 'btn-outline-secondary text-white border-secondary border-opacity-25'}`}
+                        style={{ width: '36px', height: '36px', padding: 0 }}
+                        onClick={() => setClassPage(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
+                    disabled={classPage === totalClassPages}
+                    onClick={() => setClassPage(p => Math.min(totalClassPages, p + 1))}
+                  >
+                    Next
+                  </button>
                 </div>
               )}
             </div>
@@ -1234,10 +1389,20 @@ const InstructorDashboard = () => {
 
               {/* Seasons Curriculum Outline Editor */}
               <div className="glass-card p-4 mb-4">
-                <h3 className="curriculum-section-title">
-                  <Film size={20} className="text-secondary" />
-                  <span>Curriculum Parts (Seasons & Videos)</span>
-                </h3>
+                <div className="d-flex align-items-center justify-content-between mb-4">
+                  <h3 className="curriculum-section-title mb-0">
+                    <Film size={20} className="text-secondary" />
+                    <span>Curriculum Parts (Seasons &amp; Videos)</span>
+                  </h3>
+                  <button
+                    type="button"
+                    className="btn btn-primary-custom d-inline-flex align-items-center gap-2"
+                    onClick={() => { setNewSeasonName(''); setSeasonModalOpen(true); }}
+                  >
+                    <Plus size={16} />
+                    <span>Add Season Block</span>
+                  </button>
+                </div>
 
                 {/* Seasons List Accordion style */}
                 <div className="curriculum-seasons-wrapper">
@@ -1271,24 +1436,25 @@ const InstructorDashboard = () => {
                             </span>
                           </div>
 
-                          <div className="d-flex align-items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="d-flex align-items-center gap-3" onClick={(e) => e.stopPropagation()}>
                             <button
                               className="btn btn-outline-secondary btn-sm text-white border-secondary border-opacity-25 d-inline-flex align-items-center gap-1"
-                              onClick={() => {
-                                if (activeSeasonInputId === season.id) {
-                                  setActiveSeasonInputId(null);
-                                } else {
-                                  setActiveSeasonInputId(season.id);
-                                  setVideoTitleForm('');
-                                  setVideoFileData(null);
-                                  if (videoFileRef.current) videoFileRef.current.value = '';
-                                  // auto-expand season when opening uploader
-                                  setCollapsedSeasons(prev => ({ ...prev, [season.id]: false }));
-                                }
-                              }}
+                              onClick={() => openVideoModal(season.id)}
                             >
                               <Plus size={14} />
-                              <span>{activeSeasonInputId === season.id ? 'Close Uploader' : 'Add Video'}</span>
+                              <span>Add Video</span>
+                            </button>
+                            <button
+                              className="btn btn-outline-warning btn-sm border-warning border-opacity-25 text-warning d-inline-flex align-items-center"
+                              onClick={() => {
+                                setEditingSeasonId(season.id);
+                                setNewSeasonName(season.name);
+                                setSeasonModalOpen(true);
+                              }}
+                              title="Edit Season Name"
+                              style={{ padding: '0.35rem 0.5rem' }}
+                            >
+                              <Edit size={14} />
                             </button>
                             <button
                               className="btn btn-outline-danger btn-sm border-danger border-opacity-25 text-danger d-inline-flex align-items-center"
@@ -1300,66 +1466,6 @@ const InstructorDashboard = () => {
                             </button>
                           </div>
                         </div>
-
-                        {/* Video upload form inline */}
-                        {activeSeasonInputId === season.id && (
-                          <div className="add-video-inline-form animate-fade-in">
-                            <h5 className="small fw-bold text-white mb-3 d-flex align-items-center gap-2">
-                              <Upload size={14} className="text-secondary" />
-                              Upload Video to {season.name.split(':')[0]}
-                            </h5>
-                            <div className="row g-2 align-items-end">
-                              <div className="col-12 col-md-5">
-                                <label className="form-label small text-muted mb-1" style={{ fontSize: '0.7rem' }}>VIDEO TITLE</label>
-                                <input
-                                  type="text"
-                                  className="form-control form-control-custom"
-                                  placeholder="e.g. Introduction to Backpropagation"
-                                  value={videoTitleForm}
-                                  onChange={(e) => setVideoTitleForm(e.target.value)}
-                                />
-                              </div>
-                              <div className="col-12 col-md-5">
-                                <label className="form-label small text-muted mb-1" style={{ fontSize: '0.7rem' }}>CHOOSE VIDEO FILE</label>
-                                {/* Hidden native video file input */}
-                                <input
-                                  type="file"
-                                  accept="video/*"
-                                  ref={videoFileRef}
-                                  style={{ display: 'none' }}
-                                  onChange={handleVideoFileChange}
-                                />
-                                <button
-                                  type="button"
-                                  className="btn btn-outline-secondary w-100 text-white border-secondary border-opacity-25 d-flex align-items-center justify-content-center gap-2"
-                                  onClick={() => videoFileRef.current && videoFileRef.current.click()}
-                                  style={{ height: '42px', fontSize: '0.85rem' }}
-                                >
-                                  <Film size={15} />
-                                  <span className="text-truncate" style={{ maxWidth: '150px' }}>
-                                    {videoFileData ? videoFileData.name : 'Select Video File'}
-                                  </span>
-                                </button>
-                                {videoFileData && (
-                                  <div className="d-flex align-items-center gap-1 mt-1 text-success" style={{ fontSize: '0.75rem' }}>
-                                    <Clock size={11} />
-                                    <span>Duration auto-detected: <strong>{videoFileData.duration}</strong></span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="col-12 col-md-2">
-                                <button
-                                  type="button"
-                                  className="btn btn-primary-custom w-100"
-                                  onClick={() => handleAddVideo(selectedCourse.id, season.id)}
-                                  style={{ height: '42px' }}
-                                >
-                                  <Upload size={15} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
 
                         {/* Videos list – hidden when season is collapsed */}
                         {!collapsedSeasons[season.id] && (
@@ -1398,30 +1504,8 @@ const InstructorDashboard = () => {
                   )}
                 </div>
 
-                {/* Season Creation Form */}
-                <div className="border-top border-secondary border-opacity-15 pt-4 mt-2">
-                  <h4 className="h6 fw-bold text-white mb-3">Create New Curriculum Season Block</h4>
-                  <div className="d-flex gap-2">
-                    <input
-                      type="text"
-                      className="form-control form-control-custom"
-                      placeholder="e.g. Advanced Optimization Methods"
-                      value={newSeasonName}
-                      onChange={(e) => setNewSeasonName(e.target.value)}
-                      style={{ maxWidth: '400px' }}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary-custom d-inline-flex align-items-center gap-1.5"
-                      onClick={() => handleAddSeason(selectedCourse.id)}
-                    >
-                      <Plus size={16} />
-                      <span>Add Season Block</span>
-                    </button>
-                  </div>
-                </div>
-
               </div>
+
             </div>
           )}
 
@@ -1623,6 +1707,67 @@ const InstructorDashboard = () => {
             </div>
           )}
 
+          {/* TAB 6: EARNINGS */}
+          {activeTab === 'earnings' && (
+            <div className="animate-fade-in">
+              <div className="mb-4">
+                <h1 className="h3 fw-bold mb-1">Earnings & Progress Tracking</h1>
+                <p className="text-muted">Monitor your class revenue and overall teaching progress.</p>
+              </div>
+
+              <div className="row g-4 mb-4">
+                <div className="col-12 col-md-4">
+                  <div className="glass-card p-4 h-100 text-center">
+                    <div className="text-muted small fw-bold mb-2" style={{ letterSpacing: '1px' }}>TOTAL EARNINGS (YTD)</div>
+                    <div className="display-5 fw-bold text-success mb-1">${(monthlyRevenue * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2">+15% from last year</div>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="glass-card p-4 h-100 text-center">
+                    <div className="text-muted small fw-bold mb-2" style={{ letterSpacing: '1px' }}>PENDING PAYOUT</div>
+                    <div className="display-5 fw-bold text-white mb-1">${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="text-muted small mt-2">Expected by {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="glass-card p-4 h-100 text-center">
+                    <div className="text-muted small fw-bold mb-2" style={{ letterSpacing: '1px' }}>TOTAL ENROLLMENTS</div>
+                    <div className="display-5 fw-bold text-primary mb-1">{totalStudents}</div>
+                    <div className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-2">+42 this month</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-card p-4 mb-4">
+                <h3 className="h5 fw-bold mb-4">Recent Transactions</h3>
+                <div className="table-responsive">
+                  <table className="table table-dark table-hover mb-0" style={{ backgroundColor: 'transparent' }}>
+                    <thead>
+                      <tr>
+                        <th className="text-muted small fw-normal border-secondary border-opacity-10">DATE</th>
+                        <th className="text-muted small fw-normal border-secondary border-opacity-10">CLASS</th>
+                        <th className="text-muted small fw-normal border-secondary border-opacity-10">STUDENT</th>
+                        <th className="text-muted small fw-normal border-secondary border-opacity-10 text-end">AMOUNT</th>
+                      </tr>
+                    </thead>
+                    <tbody className="border-top-0">
+                      {[1, 2, 3, 4, 5].map((_, i) => (
+                        <tr key={i}>
+                          <td className="border-secondary border-opacity-10 text-muted">{new Date(Date.now() - (i * 86400000 * 2)).toLocaleDateString()}</td>
+                          <td className="border-secondary border-opacity-10 fw-semibold text-white">Advanced Python &amp; Neural Networks</td>
+                          <td className="border-secondary border-opacity-10 text-muted">Student {i + 1}</td>
+                          <td className="border-secondary border-opacity-10 text-end text-success fw-semibold">+$84.15</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
           {/* TAB 5: PROFILE SETTINGS */}
           {activeTab === 'profile' && (
             <div className="animate-fade-in">
@@ -1741,14 +1886,14 @@ const InstructorDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCourseSubmit}>
+            <form onSubmit={handleCourseSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div className="custom-modal-body">
 
                 <div className="mb-3">
-                  <label className="form-label small fw-bold">COURSE TITLE</label>
+                  <label className="modal-field-label">COURSE TITLE</label>
                   <input
                     type="text"
-                    className="form-control form-control-custom"
+                    className="modal-field-input"
                     placeholder="e.g. Advanced AI Model Tuning"
                     value={courseForm.title}
                     onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
@@ -1758,14 +1903,13 @@ const InstructorDashboard = () => {
 
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold">CATEGORY</label>
+                    <label className="modal-field-label">CATEGORY</label>
                     <select
-                      className="form-control form-control-custom text-white"
+                      className="modal-field-select"
                       value={courseForm.category}
                       onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
-                      style={{ background: 'rgba(15, 23, 42, 0.9)' }}
                     >
-                      <option value="AI & Data Science">AI & Data Science</option>
+                      <option value="AI & Data Science">AI &amp; Data Science</option>
                       <option value="Machine Learning">Machine Learning</option>
                       <option value="UI/UX Design">UI/UX Design</option>
                       <option value="Web Development">Web Development</option>
@@ -1773,57 +1917,92 @@ const InstructorDashboard = () => {
                     </select>
                   </div>
 
+                  {/* STATUS — above Publish Date & Time */}
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold">PRICE ($ USD)</label>
+                    <label className="modal-field-label">STATUS</label>
+                    <select
+                      className="modal-field-select"
+                      value={courseForm.status}
+                      onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
+                    >
+                      <option value="Active">Active (Live &amp; Accessible)</option>
+                      <option value="Published">Published (Public access)</option>
+                      <option value="Draft">Draft (Only viewable by you)</option>
+                      <option value="Archived">Archived (Hidden from catalog)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="mb-3">
+                  <label className="modal-field-label">DESCRIPTION</label>
+                  <textarea
+                    className="modal-field-input"
+                    placeholder="Describe what students will learn in this course..."
+                    rows={3}
+                    value={courseForm.description}
+                    onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                    style={{ resize: 'vertical', minHeight: '80px' }}
+                  />
+                </div>
+
+                {/* Prices */}
+                <div className="row g-3 mb-3">
+                  <div className="col-md-6">
+                    <label className="modal-field-label">REGULAR PRICE ($ USD)</label>
                     <input
                       type="number"
                       step="0.01"
-                      className="form-control form-control-custom"
+                      min="0"
+                      className="modal-field-input"
                       placeholder="99.00"
-                      value={courseForm.price}
-                      onChange={(e) => setCourseForm({ ...courseForm, price: e.target.value })}
+                      value={courseForm.regularPrice}
+                      onChange={(e) => setCourseForm({ ...courseForm, regularPrice: e.target.value })}
                       required
                     />
                   </div>
-                </div>
-
-                {/* Publish Date & Time */}
-                <div className="row g-3 mb-3">
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold">PUBLISH DATE</label>
+                    <label className="modal-field-label">
+                      SALE PRICE ($ USD) <span style={{ fontWeight: 400, fontSize: '0.7rem', opacity: 0.6 }}>Optional</span>
+                    </label>
                     <input
-                      type="date"
-                      className="form-control form-control-custom text-white"
-                      value={courseForm.publishDate}
-                      onChange={(e) => setCourseForm({ ...courseForm, publishDate: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label small fw-bold">PUBLISH TIME</label>
-                    <input
-                      type="time"
-                      className="form-control form-control-custom text-white"
-                      value={courseForm.publishTime}
-                      onChange={(e) => setCourseForm({ ...courseForm, publishTime: e.target.value })}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="modal-field-input"
+                      placeholder="49.00"
+                      value={courseForm.salePrice}
+                      onChange={(e) => setCourseForm({ ...courseForm, salePrice: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label small fw-bold">STATUS</label>
-                  <select
-                    className="form-control form-control-custom text-white"
-                    value={courseForm.status}
-                    onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
-                    style={{ background: 'rgba(15, 23, 42, 0.9)' }}
-                  >
-                    <option value="Published">Published (Public access)</option>
-                    <option value="Draft">Draft (Only viewable by you)</option>
-                  </select>
-                </div>
+                {/* Publish Date & Time — only shown when status is Active */}
+                {courseForm.status === 'Active' && (
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                      <label className="modal-field-label">PUBLISH DATE</label>
+                      <input
+                        type="date"
+                        className="modal-field-input"
+                        value={courseForm.publishDate}
+                        onChange={(e) => setCourseForm({ ...courseForm, publishDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="modal-field-label">PUBLISH TIME</label>
+                      <input
+                        type="time"
+                        className="modal-field-input"
+                        value={courseForm.publishTime}
+                        onChange={(e) => setCourseForm({ ...courseForm, publishTime: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-3">
-                  <label className="form-label small fw-bold">COVER IMAGE</label>
+                  <label className="modal-field-label">COVER IMAGE</label>
                   {/* Preview of current image */}
                   {(courseForm.imagePreview || courseForm.image) && (
                     <div className="mb-2">
@@ -1886,7 +2065,7 @@ const InstructorDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleChangePasswordSubmit}>
+            <form onSubmit={handleChangePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div className="custom-modal-body">
                 <div className="mb-3">
                   <label className="form-label small fw-bold">CURRENT PASSWORD</label>
@@ -1935,6 +2114,208 @@ const InstructorDashboard = () => {
                 </button>
                 <button type="submit" className="btn btn-primary-custom">
                   Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD VIDEO MODAL */}
+      {videoModalOpen && selectedCourse && (
+        <div className="custom-modal-backdrop" onClick={closeVideoModal}>
+          <div className="custom-modal-card animate-fade-in" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="custom-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <Film size={20} className="text-secondary" />
+                <h3 className="h5 fw-bold mb-0 text-white">Add Video to Season</h3>
+              </div>
+              <button
+                className="btn btn-link text-muted p-0 text-decoration-none"
+                onClick={closeVideoModal}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleAddVideo(selectedCourse.id); }}
+              style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+            >
+              <div className="custom-modal-body">
+                <p className="text-muted small mb-3">
+                  Choose a season, add video details, then upload a file or paste a video URL.
+                </p>
+
+                <div className="mb-1">
+                  <label className="modal-field-label">SEASON</label>
+                  <select
+                    className="modal-field-select"
+                    value={selectedSeasonIdForVideo ?? ''}
+                    onChange={(e) => setSelectedSeasonIdForVideo(Number(e.target.value))}
+                    required
+                  >
+                    <option value="" disabled>Select a season</option>
+                    {(courseSyllabus[selectedCourse.id] || []).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-1">
+                  <label className="modal-field-label">VIDEO TITLE</label>
+                  <input
+                    type="text"
+                    className="modal-field-input"
+                    placeholder="e.g. Introduction to Backpropagation"
+                    value={videoTitleForm}
+                    onChange={(e) => setVideoTitleForm(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="mb-1">
+                  <label className="modal-field-label">VIDEO DESCRIPTION</label>
+                  <textarea
+                    className="modal-field-input modal-field-textarea"
+                    rows="3"
+                    placeholder="Brief summary of what this video covers..."
+                    value={videoDescForm}
+                    onChange={(e) => setVideoDescForm(e.target.value)}
+                  />
+                </div>
+
+                <div className="mb-2">
+                  <label className="modal-field-label">VIDEO SOURCE</label>
+                  <div className="video-source-tabs">
+                    <button
+                      type="button"
+                      className={`video-source-tab ${videoSourceType === 'file' ? 'active' : ''}`}
+                      onClick={() => setVideoSourceType('file')}
+                    >
+                      <Upload size={14} />
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      className={`video-source-tab ${videoSourceType === 'url' ? 'active' : ''}`}
+                      onClick={() => setVideoSourceType('url')}
+                    >
+                      <Link2 size={14} />
+                      Paste URL
+                    </button>
+                  </div>
+                </div>
+
+                {videoSourceType === 'file' ? (
+                  <>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      ref={videoFileRef}
+                      style={{ display: 'none' }}
+                      onChange={handleVideoFileChange}
+                    />
+                    <div
+                      className={`video-dropzone ${videoFileData ? 'has-file' : ''}`}
+                      onDrop={handleVideoDrop}
+                      onDragOver={handleVideoDragOver}
+                      onClick={() => videoFileRef.current?.click()}
+                    >
+                      <Upload size={28} className="text-secondary mb-2" />
+                      <p className="mb-1 fw-semibold text-white small">
+                        {videoFileData ? videoFileData.name : 'Drag & drop your video here'}
+                      </p>
+                      <p className="text-muted small mb-0">
+                        {videoFileData ? 'Click to replace file' : 'or click to browse — MP4, MOV, WebM supported'}
+                      </p>
+                      {videoFileData && (
+                        <div className="d-flex align-items-center justify-content-center gap-1 mt-2 text-success" style={{ fontSize: '0.75rem' }}>
+                          <Clock size={11} />
+                          <span>Duration: <strong>{videoFileData.duration}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mb-1">
+                    <input
+                      type="url"
+                      className="modal-field-input"
+                      placeholder="https://example.com/video.mp4 or YouTube/Vimeo link"
+                      value={videoUrlForm}
+                      onChange={(e) => setVideoUrlForm(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="custom-modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
+                  onClick={closeVideoModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary-custom d-inline-flex align-items-center gap-2">
+                  <Upload size={16} />
+                  Add Video
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD/EDIT SEASON MODAL */}
+      {seasonModalOpen && selectedCourse && (
+        <div className="custom-modal-backdrop" onClick={() => { setSeasonModalOpen(false); setEditingSeasonId(null); }}>
+          <div className="custom-modal-card animate-fade-in" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="custom-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <BookOpenCheck size={20} className="text-secondary" />
+                <h3 className="h5 fw-bold mb-0 text-white">{editingSeasonId ? 'Edit Season Block' : 'Create New Season Block'}</h3>
+              </div>
+              <button
+                className="btn btn-link text-muted p-0 text-decoration-none"
+                onClick={() => { setSeasonModalOpen(false); setEditingSeasonId(null); }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleAddSeason(selectedCourse.id); setSeasonModalOpen(false); }} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div className="custom-modal-body">
+                <p className="text-muted small mb-3">
+                  {editingSeasonId ? 'Update the name of this season.' : 'Enter a name for this season. It will be prefixed automatically with the season number.'}
+                </p>
+                <div className="mb-1">
+                  <label className="modal-field-label">SEASON NAME</label>
+                  <input
+                    type="text"
+                    className="modal-field-input"
+                    placeholder="e.g. Advanced Optimization Methods"
+                    value={newSeasonName}
+                    onChange={(e) => setNewSeasonName(e.target.value)}
+                    autoFocus
+                    required
+                  />
+                  {!editingSeasonId && newSeasonName.trim() && (
+                    <small className="text-muted d-block mt-1">
+                      Will be saved as: <span className="text-secondary fw-semibold">Season {(courseSyllabus[selectedCourse.id]?.length || 0) + 1}: {newSeasonName}</span>
+                    </small>
+                  )}
+                </div>
+              </div>
+              <div className="custom-modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary text-white border-secondary border-opacity-25"
+                  onClick={() => { setSeasonModalOpen(false); setEditingSeasonId(null); }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary-custom d-inline-flex align-items-center gap-2">
+                  {editingSeasonId ? <Edit size={16} /> : <Plus size={16} />}
+                  {editingSeasonId ? 'Save Changes' : 'Add Season Block'}
                 </button>
               </div>
             </form>
